@@ -91,6 +91,10 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
         if abs(calor) > 0.001 or potencia > 0.001:
             datos_en.append({"Equipo": u.ID, "Calor (kW)": round(calor, 2), "Potencia (kW)": round(potencia, 2)})
 
+# =========================================================================
+# 3. TEA Robusto (Simulador económico)
+# =========================================================================
+                          
     class TEA_Robusto(bst.TEA):
         def _DPI(self, installed_equipment_cost): return self.purchase_cost
         def _TDC(self, DPI): return DPI
@@ -115,12 +119,19 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     except:
         p_path = None
 
+# =========================================================================
+# 4. ADVERTENCIAS (Temperatura de entrada)
+# =========================================================================
+                          
     advertencias = []
     if mosto.phase != 'l' or mosto.V > 0:
         advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
 
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
 
+# =========================================================================
+# 5. PFD INTERACTIVO (Resultados en imagen SVG)
+# =========================================================================
 
 def generar_pfd_interactivo(datos_simulacion):
     ruta_svg = "D_eth_sys.svg"
@@ -179,7 +190,7 @@ def generar_pfd_interactivo(datos_simulacion):
     """
 
 # =========================================================================
-# 3. PÁGINA DE INICIO (LANDING PAGE)
+# 6. PÁGINA DE INICIO (LANDING PAGE)
 # =========================================================================
 def mostrar_inicio():
     st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
@@ -217,7 +228,7 @@ def mostrar_inicio():
         st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
 
 # =========================================================================
-# 4. PÁGINA DEL SIMULADOR (TU CÓDIGO ORIGINAL MODULARIZADO)
+# 7. PÁGINA DEL SIMULADOR (TU CÓDIGO ORIGINAL MODULARIZADO)
 # =========================================================================
 def mostrar_simulacion():
     # Botón discreto en la barra lateral para volver a la Home
@@ -251,7 +262,9 @@ def mostrar_simulacion():
         else:
             st.session_state['resultados'] = (dm, de, ec, pf, adv)
 
-    # DESPLIEGUE ÚNICO DE RESULTADOS
+# =========================================================================
+# 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
+# =========================================================================
     if 'resultados' in st.session_state:
         dm, de, ec, pf, advs = st.session_state['resultados']
         
@@ -270,7 +283,10 @@ def mostrar_simulacion():
         with col2:
             st.subheader("⚡ Energía")
             st.dataframe(de, use_container_width=True)
-            
+
+# =========================================================================
+# 9. TUTOR IA Interactivo (Gemini)
+# =========================================================================
             st.divider()
             st.subheader("🤖 Tutor IA Interactivo")
             api_key = st.secrets.get("GEMINI_API_KEY")
@@ -305,7 +321,9 @@ def mostrar_simulacion():
             st.divider()
             st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
 
-        # INTEGRACIÓN DINÁMICA DEL SVG (GEMELO DIGITAL)
+# =========================================================================
+# 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
+# =========================================================================
         row_p_final = dm[dm['Corriente'] == 'Producto_Final']
         if not row_p_final.empty:
             p_bar = row_p_final['Presión (bar)'].values[0]
@@ -351,7 +369,7 @@ def mostrar_simulacion():
         st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
 
 # =========================================================================
-# 5. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
+# 11. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
 # =========================================================================
 if st.session_state['pagina'] == 'inicio':
     mostrar_inicio()
