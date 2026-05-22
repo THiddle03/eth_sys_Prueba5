@@ -231,8 +231,8 @@ ZONAS_EQUIPOS = {
     "V-411": [620, 370, 60, 45],
     "K-410": [800, 300, 95, 180],
     "W-510": [935, 450, 80, 90],
-    "P-510": [1010, 650, 60, 65],
-    "Corriente-9": [1000, 670, 60, 25]  # <-- NUEVA ZONA: [X, Y, Ancho, Alto] sobre la línea 9
+    "P-510": [1005, 670, 60, 65],
+    "Producto Final": [970, 640, 60, 25]  # <-- NUEVA ZONA: [X, Y, Ancho, Alto] sobre la línea 9
 }
 
 def generar_pfd_interactivo(datos_simulacion):
@@ -322,7 +322,7 @@ if 'resultados' in st.session_state:
         "P510": {"Potencia": f"{de[de['Equipo']=='P510']['Potencia (kW)'].values[0] if 'P510' in de['Equipo'].values else '0.0'} kW"},
         
         # Al limpiar "Corriente-9" con .replace("-", ""), buscará la clave "Corriente9"
-        "Corriente9": {
+        "Producto Final": {
             "Temperatura": f"{t_c} °C",
             "Presión": f"{p_atm} atm",
             "Flujo Másico": f"{f_mass} kg/h",
