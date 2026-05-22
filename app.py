@@ -184,8 +184,8 @@ def generar_pfd_interactivo(datos_simulacion):
 def mostrar_inicio():
     st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
     st.subheader("Plataforma con Interfaz de Streamlit, simulada en Python con el programa BioSTEAM")
-     st.subheader("Introducción a la simulación de procesos y diseño de plantas")
-     st.subheader("IQ. Tania Bravo Cassab")
+    st.subheader("Introducción a la simulación de procesos y diseño de plantas")
+    st.subheader("IQ. Tania Bravo Cassab")
     st.divider()
 
     col1, col2 = st.columns([2, 1])
