@@ -330,7 +330,7 @@ if 'resultados' in st.session_state:
             "% Etanol": pct_eth,
             "% Agua": pct_agua
         }
-    }
+  
 
     st.divider()
     st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
