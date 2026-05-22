@@ -160,7 +160,7 @@ def generar_pfd_interactivo(datos_simulacion):
 
     estilo_responsivo = """
     <style>
-        svg { width: 100% !important; height: auto !important; max-height: 700px; }
+        svg { width: 100% !important; height: 100% !important; max-height: 1000px; }
     </style>
     """
 
