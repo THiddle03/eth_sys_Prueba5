@@ -103,41 +103,16 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     except:
         p_path = None
 
-    # =========================================================================
-    # 🕵️‍♂️ NUEVA LÓGICA DE AUDITORÍA Y ADVERTENCIAS TERMODINÁMICAS
+# =========================================================================
+    # 🕵️‍♂️ LÓGICA DE ADVERTENCIA CRÍTICA (ÚNICA)
     # =========================================================================
     advertencias = []
 
-    # Caso 1: Alerta sobre Corriente "1_MOSTO"
-    if temp_mosto > 90:
-        advertencias.append("⚠️ **Alerta Mosto:** La temperatura seleccionada supera los **90°C**, límite crítico para evitar degradación térmica extrema antes del proceso.")
+    # Se activa si el mosto deja de ser puramente líquido ('l') o su fracción de vapor (V) es mayor a 0
     if mosto.phase != 'l' or mosto.V > 0:
         advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
 
-    # Caso 2: Alerta sobre Corriente "Mezcla" (Salida de W310)
-    mezcla = W310.outs[0]
-    if T_flash > 130:
-        advertencias.append("⚠️ **Alerta W310:** La temperatura de salida supera los **130°C**. Operar a estas temperaturas genera riesgos severos de sobrepresión en intercambiadores estándar.")
-    if mezcla.phase != 'l' or mezcla.V > 0:
-        advertencias.append(f"⚠️ **Alerta W310:** La corriente 'Mezcla' ya se está evaporando (Fracción de Vapor: {mezcla.V:.2%}) antes de la válvula V411. Esto provoca cavitación y pérdida de control en la caída de presión.")
-
-    # Caso 3: Alerta sobre el Separador Flash K410 (Diagrama de fases y Azeótropo)
-    v_out = K410.outs[0]
-    l_out = K410.outs[1]
-    
-    # 3a. Fuera del diagrama de fases (Si una de las dos fases sale vacía, no hay equilibrio L-V)
-    if v_out.F_mass < 0.01 or l_out.F_mass < 0.01:
-        advertencias.append(f"⚠️ **Alerta K410:** Operación fuera del diagrama de fases. A **{P_flash} atm**, la mezcla no se separa (Fracción de vapor total: {K410.outs[0].F_mol/K410.ins[0].F_mol:.1%}). El flash actúa como un simple tanque monofásico.")
-    else:
-        # 3b. Límite Azeotrópico dinámico
-        # Si la volatilidad relativa se acerca a 1, las fracciones molares de vapor (y) y líquido (x) se igualan.
-        y_eth = v_out.imol['Ethanol'] / v_out.F_mol if v_out.F_mol > 0 else 0
-        x_eth = l_out.imol['Ethanol'] / l_out.F_mol if l_out.F_mol > 0 else 0
-        
-        if abs(y_eth - x_eth) < 0.015:  # Margen de proximidad al equilibrio azeotrópico
-            advertencias.append(f"⚠️ **Alerta Azeótropo K410:** La presión de **{P_flash} atm** forzó al sistema a operar atrapado en el punto azeotrópico para esta composición. El vapor ({y_eth:.1%}\ mol) y el líquido ({x_eth:.1%}\ mol) tienen la misma concentración; la destilación térmica simple ya no purifica.")
-
-    # Retornamos las advertencias como el penúltimo elemento
+    # Retornamos de forma limpia los 6 elementos requeridos
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
 
 
@@ -165,35 +140,59 @@ p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=
 
 # Lógica de Simulación en la Barra Lateral
 if st.sidebar.button("Simular Proceso", type="primary"):
-    # 1. Correr la función (debe retornar 6 elementos en total con el error)
     dm, de, ec, pf, adv, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
                                                  p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
     if err:
         st.error(err)
     else:
-        # 2. ⚠️ GUARDAR LOS 5 ELEMENTOS AQUÍ (dm, de, ec, pf, adv)
+        # Guardamos limpiamente los resultados en la sesión
         st.session_state['resultados'] = (dm, de, ec, pf, adv)
-
-# ... (Todo el código anterior de simulación y lógica se mantiene igual)
 
 
 # MOSTRAR RESULTADOS
 if 'resultados' in st.session_state:
-    # 🛡️ DESEMPAQUETADO SEGURO: Evita el colapso por discrepancia de elementos
+    # Desempaquetado defensivo
     datos_guardados = st.session_state['resultados']
     if len(datos_guardados) == 5:
         dm, de, ec, pf, advs = datos_guardados
     else:
-        # Respaldo por si quedó caché antigua en la sesión
         dm, de, ec, pf = datos_guardados[:4]
-        advs = [] # Sin advertencias por defecto
+        advs = []
     
-    # --- RENDERIZADO DE ADVERTENCIAS ---
+    # --- MOSTRAR ALERTA SOLO SI EXISTE ---
     if advs:
-        st.subheader("🚨 Diagnóstico Operativo del Sistema")
         for alerta in advs:
             st.warning(alerta)
         st.divider()
+
+    # --- TABLAS DE BALANCES ---
+    st.divider()
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("📊 Balances de Materia")
+        st.dataframe(dm, use_container_width=True)
+        st.subheader("📈 Economía")
+        st.table(pd.DataFrame(list(ec.items()), columns=["Indicador", "Valor"]))
+        
+    with col2:
+        st.subheader("⚡ Energía")
+        st.dataframe(de, use_container_width=True)
+        
+        # --- TUTOR IA INTERACTIVO ---
+        st.divider()
+        st.subheader("🤖 Tutor IA Interactivo")
+        # ... (Tu código de Gemini se mantiene aquí abajo igual)
+
+    # --- GEMELO DIGITAL (AL FINAL O DONDE PREFIERAS) ---
+    st.divider()
+    st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
+    
+    html_interactivo = generar_pfd_interactivo(datos_actualizados)
+    if html_interactivo is None:
+        st.error("🚨 **Error de archivo:** No se encontró 'D_eth_sys.svg' en el servidor. Verifica el nombre en tu repositorio.")
+    else:
+        st.info("Pasa el mouse sobre el diagrama para auditar los resultados dinámicos.")
+        components.html(html_interactivo, height=750, scrolling=True)
 
     # (El resto de tu código para mostrar PFD, balances y tablas se mantiene igual)
 
