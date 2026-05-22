@@ -232,7 +232,7 @@ ZONAS_EQUIPOS = {
     "K-410": [800, 300, 95, 180],
     "W-510": [935, 450, 80, 90],
     "P-510": [1015, 650, 60, 45],
-    "Producto Final": [970, 700, 130, 50]  # <-- NUEVA ZONA: [X, Y, Ancho, Alto] sobre la línea 9
+    "Producto Final": [1000, 700, 180, 60]  # <-- NUEVA ZONA: [X, Y, Ancho, Alto] sobre la línea 9
 }
 
 def generar_pfd_interactivo(datos_simulacion):
