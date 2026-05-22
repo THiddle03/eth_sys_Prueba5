@@ -158,11 +158,7 @@ def generar_pfd_interactivo(datos_simulacion):
               onclick="alert('{equipo}\\n{'-'*15}\\n' + '{tooltip_html}'.replace(/<br>/g, '\\n').replace(/<b>/g, '').replace(/<\\/b>/g, ''))"/>
         """
 
-    estilo_responsivo = """
-    <style>
-        svg { width: 100% !important; height: 100% !important; max-height: 1000px; }
-    </style>
-    """
+   
 
     return f"""
     <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
