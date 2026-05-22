@@ -165,22 +165,28 @@ p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=
 
 # Lógica de Simulación en la Barra Lateral
 if st.sidebar.button("Simular Proceso", type="primary"):
-    # Ahora desempaquetamos 6 elementos (dm, de, ec, pf, adv, err)
+    # 1. Correr la función (debe retornar 6 elementos en total con el error)
     dm, de, ec, pf, adv, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
                                                  p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
     if err:
         st.error(err)
     else:
-        # Guardamos las advertencias en el estado de la sesión
+        # 2. ⚠️ GUARDAR LOS 5 ELEMENTOS AQUÍ (dm, de, ec, pf, adv)
         st.session_state['resultados'] = (dm, de, ec, pf, adv)
 
 # ... (Todo el código anterior de simulación y lógica se mantiene igual)
 
-# MOSTRAR RESULTADOS
+
 # MOSTRAR RESULTADOS
 if 'resultados' in st.session_state:
-    # Desempaquetamos los 5 elementos del estado
-    dm, de, ec, pf, advs = st.session_state['resultados']
+    # 🛡️ DESEMPAQUETADO SEGURO: Evita el colapso por discrepancia de elementos
+    datos_guardados = st.session_state['resultados']
+    if len(datos_guardados) == 5:
+        dm, de, ec, pf, advs = datos_guardados
+    else:
+        # Respaldo por si quedó caché antigua en la sesión
+        dm, de, ec, pf = datos_guardados[:4]
+        advs = [] # Sin advertencias por defecto
     
     # --- RENDERIZADO DE ADVERTENCIAS ---
     if advs:
@@ -189,7 +195,9 @@ if 'resultados' in st.session_state:
             st.warning(alerta)
         st.divider()
 
-    # Continuación normal de tu código (Mostrar PFD, Balances, etc.)
+    # (El resto de tu código para mostrar PFD, balances y tablas se mantiene igual)
+
+  
     if pf and os.path.exists(pf):
         st.image(pf, caption="PFD dinámico generado por la simulación")
     
