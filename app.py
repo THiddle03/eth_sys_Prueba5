@@ -11,7 +11,6 @@ import streamlit.components.v1 as components
 # 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
-# 2. FUNCIÓN DE SIMULACIÓN
 def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
     
@@ -51,9 +50,10 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     try:
         eth_sys.simulate()
     except Exception as e:
-        return None, None, None, None, f"Error: {e}"
+        return None, None, None, None, None, f"Error: {e}"
 
-    # --- REPORTE MATERIA ---
+    # --- REPORTE MATERIA Y ENERGÍA ---
+    # (Mantén aquí tu lógica actual para generar datos_mat y datos_en)
     datos_mat = []
     for s in eth_sys.streams:
         if s.F_mass > 0.01:
@@ -65,35 +65,20 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
                 "% Etanol": f"{(s.imass['Ethanol']/s.F_mass if s.F_mass > 0 else 0):.1%}",
                 "% Agua": f"{(s.imass['Water']/s.F_mass if s.F_mass > 0 else 0):.1%}"
             })
-    
-    # --- REPORTE ENERGÍA ---
-  # --- REPORTE ENERGÍA (CORREGIDO) ---
+            
     datos_en = []
     for u in eth_sys.units:
-        # 1. Calculamos calor de servicios auxiliares (W310, W510, etc.)
         calor_util = sum([hu.duty for hu in u.heat_utilities])/3600 if hasattr(u, "heat_utilities") else 0
-        
-        # 2. Caso especial para W210 (HXprocess): extraer carga térmica de proceso
         if u.ID == "W210" and hasattr(u, 'H'):
-            # El duty en HXprocess se puede obtener por la diferencia de entalpía o el atributo .duty
-            calor_proceso = u.duty / 3600 # Convertir de kJ/h a kW (kJ/s)
-            calor = calor_proceso
+            calor = u.duty / 3600
         else:
             calor = calor_util
-
         potencia = u.power_utility.rate if u.power_utility else 0
-        
-        # Filtro para mostrar solo equipos con consumo/transferencia significativa
         if abs(calor) > 0.001 or potencia > 0.001:
-            datos_en.append({
-                "Equipo": u.ID, 
-                "Calor (kW)": round(calor, 2), 
-                "Potencia (kW)": round(potencia, 2)
-            })
-    
-    df_en = pd.DataFrame(datos_en)
+            datos_en.append({"Equipo": u.ID, "Calor (kW)": round(calor, 2), "Potencia (kW)": round(potencia, 2)})
 
-# --- TEA ROBUSTO (ACTUALIZADO) ---
+    # --- TEA ROBUSTO ---
+    # (Mantén tu lógica de la clase TEA_Robusto e ind_econ)
     class TEA_Robusto(bst.TEA):
         def _DPI(self, installed_equipment_cost): return self.purchase_cost
         def _TDC(self, DPI): return DPI
@@ -103,24 +88,14 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
         @property
         def VOC(self): return self.system.material_cost + self.system.utility_cost
 
-    tea = TEA_Robusto(
-        system=eth_sys, IRR=0.15, duration=(2025, 2045), depreciation='MACRS7',
-        income_tax=0.3, operating_days=330, lang_factor=4.0, construction_schedule=(0.4, 0.6),
-        WC_over_FCI=0.05, startup_months=6, startup_FOCfrac=0.5, startup_VOCfrac=0.5,
-        startup_salesfrac=0.5, finance_interest=0, finance_years=0, finance_fraction=0
-    )
-    
+    tea = TEA_Robusto(system=eth_sys, IRR=0.15, duration=(2025, 2045), depreciation='MACRS7',
+                      income_tax=0.3, operating_days=330, lang_factor=4.0, construction_schedule=(0.4, 0.6),
+                      WC_over_FCI=0.05, startup_months=6, startup_FOCfrac=0.5, startup_VOCfrac=0.5,
+                      startup_salesfrac=0.5, finance_interest=0, finance_years=0, finance_fraction=0)
     tea.IRR = 0.0
     costo_p = tea.solve_price(producto)
-    
-    # Diccionario con los nuevos parámetros solicitados
-    ind_econ = {
-        "Costo Producción ($/kg)": round(costo_p, 3),
-        "Precio Venta ($/kg)": round(precio_etanol, 3), # Parámetro agregado
-        "NPV (MUSD)": round(tea.NPV/1e6, 2),
-        "ROI (%)": round(tea.ROI*100, 1),
-        "PBP (Años)": round(tea.PBP, 2) # Parámetro agregado
-    }
+    ind_econ = {"Costo Producción ($/kg)": round(costo_p, 3), "Precio Venta ($/kg)": round(precio_etanol, 3),
+                "NPV (MUSD)": round(tea.NPV/1e6, 2), "ROI (%)": round(tea.ROI*100, 1), "PBP (Años)": round(tea.PBP, 2)}
 
     p_path = f"pfd_{uuid.uuid4().hex[:8]}.png"
     try:
@@ -128,10 +103,7 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     except:
         p_path = None
 
-    return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, None
-
-
-# =========================================================================
+    # =========================================================================
     # 🕵️‍♂️ NUEVA LÓGICA DE AUDITORÍA Y ADVERTENCIAS TERMODINÁMICAS
     # =========================================================================
     advertencias = []
@@ -166,6 +138,7 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
             advertencias.append(f"⚠️ **Alerta Azeótropo K410:** La presión de **{P_flash} atm** forzó al sistema a operar atrapado en el punto azeotrópico para esta composición. El vapor ({y_eth:.1%}\ mol) y el líquido ({x_eth:.1%}\ mol) tienen la misma concentración; la destilación térmica simple ya no purifica.")
 
     # Retornamos las advertencias como el penúltimo elemento
+    return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
 
 
 
