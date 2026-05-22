@@ -130,6 +130,45 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
 
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, None
 
+
+# =========================================================================
+    # 🕵️‍♂️ NUEVA LÓGICA DE AUDITORÍA Y ADVERTENCIAS TERMODINÁMICAS
+    # =========================================================================
+    advertencias = []
+
+    # Caso 1: Alerta sobre Corriente "1_MOSTO"
+    if temp_mosto > 90:
+        advertencias.append("⚠️ **Alerta Mosto:** La temperatura seleccionada supera los **90°C**, límite crítico para evitar degradación térmica extrema antes del proceso.")
+    if mosto.phase != 'l' or mosto.V > 0:
+        advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
+
+    # Caso 2: Alerta sobre Corriente "Mezcla" (Salida de W310)
+    mezcla = W310.outs[0]
+    if T_flash > 130:
+        advertencias.append("⚠️ **Alerta W310:** La temperatura de salida supera los **130°C**. Operar a estas temperaturas genera riesgos severos de sobrepresión en intercambiadores estándar.")
+    if mezcla.phase != 'l' or mezcla.V > 0:
+        advertencias.append(f"⚠️ **Alerta W310:** La corriente 'Mezcla' ya se está evaporando (Fracción de Vapor: {mezcla.V:.2%}) antes de la válvula V411. Esto provoca cavitación y pérdida de control en la caída de presión.")
+
+    # Caso 3: Alerta sobre el Separador Flash K410 (Diagrama de fases y Azeótropo)
+    v_out = K410.outs[0]
+    l_out = K410.outs[1]
+    
+    # 3a. Fuera del diagrama de fases (Si una de las dos fases sale vacía, no hay equilibrio L-V)
+    if v_out.F_mass < 0.01 or l_out.F_mass < 0.01:
+        advertencias.append(f"⚠️ **Alerta K410:** Operación fuera del diagrama de fases. A **{P_flash} atm**, la mezcla no se separa (Fracción de vapor total: {K410.outs[0].F_mol/K410.ins[0].F_mol:.1%}). El flash actúa como un simple tanque monofásico.")
+    else:
+        # 3b. Límite Azeotrópico dinámico
+        # Si la volatilidad relativa se acerca a 1, las fracciones molares de vapor (y) y líquido (x) se igualan.
+        y_eth = v_out.imol['Ethanol'] / v_out.F_mol if v_out.F_mol > 0 else 0
+        x_eth = l_out.imol['Ethanol'] / l_out.F_mol if l_out.F_mol > 0 else 0
+        
+        if abs(y_eth - x_eth) < 0.015:  # Margen de proximidad al equilibrio azeotrópico
+            advertencias.append(f"⚠️ **Alerta Azeótropo K410:** La presión de **{P_flash} atm** forzó al sistema a operar atrapado en el punto azeotrópico para esta composición. El vapor ({y_eth:.1%}\ mol) y el líquido ({x_eth:.1%}\ mol) tienen la misma concentración; la destilación térmica simple ya no purifica.")
+
+    # Retornamos las advertencias como el penúltimo elemento
+
+
+
 # 3. INTERFAZ DE USUARIO
 st.title("🧪 Simulador Bioetanol: Control Termodinámico y Económico")
 
@@ -151,24 +190,35 @@ p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.01, 0.10, 0.025, step=0.005
 p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 0.50, 0.05, step=0.01)
 p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
 
-# Lógica de Simulación
+# Lógica de Simulación en la Barra Lateral
 if st.sidebar.button("Simular Proceso", type="primary"):
-    dm, de, ec, pf, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
-                                            p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
+    # Ahora desempaquetamos 6 elementos (dm, de, ec, pf, adv, err)
+    dm, de, ec, pf, adv, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
+                                                 p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
     if err:
         st.error(err)
     else:
-        st.session_state['resultados'] = (dm, de, ec, pf)
+        # Guardamos las advertencias en el estado de la sesión
+        st.session_state['resultados'] = (dm, de, ec, pf, adv)
 
 # ... (Todo el código anterior de simulación y lógica se mantiene igual)
 
 # MOSTRAR RESULTADOS
+# MOSTRAR RESULTADOS
 if 'resultados' in st.session_state:
-    dm, de, ec, pf = st.session_state['resultados']
+    # Desempaquetamos los 5 elementos del estado
+    dm, de, ec, pf, advs = st.session_state['resultados']
     
+    # --- RENDERIZADO DE ADVERTENCIAS ---
+    if advs:
+        st.subheader("🚨 Diagnóstico Operativo del Sistema")
+        for alerta in advs:
+            st.warning(alerta)
+        st.divider()
+
+    # Continuación normal de tu código (Mostrar PFD, Balances, etc.)
     if pf and os.path.exists(pf):
         st.image(pf, caption="PFD dinámico generado por la simulación")
-
     
 
     st.divider()
