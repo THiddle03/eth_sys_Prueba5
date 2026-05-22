@@ -24,8 +24,12 @@ ZONAS_EQUIPOS = {
     "Producto Final": [970, 725, 180, 100]
 }
 
+# Inicializar el control de navegación si no existe
+if 'pagina' not in st.session_state:
+    st.session_state['pagina'] = 'inicio'
+
 # =========================================================================
-# 2. FUNCIONES SOURCING Y CÁLCULO
+# 2. FUNCIONES SOURCING Y CÁLCULO (MOTOR BIOSTEAM)
 # =========================================================================
 def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
@@ -34,20 +38,17 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     chemicals = tmo.Chemicals(["Water", "Ethanol"])
     bst.settings.set_thermo(chemicals)
 
-    # Configuración de precios dinámicos
     bst.PowerUtility.price = precio_elec
     vapor = bst.HeatUtility.get_agent("low_pressure_steam")
     vapor.heat_transfer_price = precio_vapor
     agua = bst.HeatUtility.get_agent("cooling_water")
     agua.heat_transfer_price = precio_agua
 
-    # --- CORRIENTES ---
     mosto = bst.Stream("1_MOSTO", Water=flow_water, Ethanol=flow_eth, units="kg/hr",
                        T=temp_mosto + 273.15, P=101325)
     mosto.price = precio_mp
     vinazas_retorno = bst.Stream("Vinazas_Retorno", T=95+273.15, P=3*101325)
 
-    # --- EQUIPOS ---
     P110 = bst.Pump("P110", ins=mosto, P=4*101325)
     W210 = bst.HXprocess("W210", ins=(P110-0, vinazas_retorno), outs=("3_Mosto_Pre", "Drenaje"), phase0="l", phase1="l")
     W210.outs[0].T = 85 + 273.15
@@ -60,7 +61,6 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     producto.price = precio_etanol
     P510 = bst.Pump("P510", ins=K410-1, outs=vinazas_retorno, P=3*101325)
 
-    # --- SISTEMA ---
     eth_sys = bst.System("planta_etanol", path=(P110, W210, W310, V411, K410, W510, P510))
     
     try:
@@ -68,7 +68,6 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     except Exception as e:
         return None, None, None, None, None, f"Error: {e}"
 
-    # --- REPORTE MATERIA Y ENERGÍA ---
     datos_mat = []
     for s in eth_sys.streams:
         if s.F_mass > 0.01:
@@ -92,7 +91,6 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
         if abs(calor) > 0.001 or potencia > 0.001:
             datos_en.append({"Equipo": u.ID, "Calor (kW)": round(calor, 2), "Potencia (kW)": round(potencia, 2)})
 
-    # --- TEA ROBUSTO ---
     class TEA_Robusto(bst.TEA):
         def _DPI(self, installed_equipment_cost): return self.purchase_cost
         def _TDC(self, DPI): return DPI
@@ -117,9 +115,8 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     except:
         p_path = None
 
-    # 🕵️‍♂️ LÓGICA DE ADVERTENCIA CRÍTICA SOLICITADA
     advertencias = []
-    if mosto.phase != 'l' or mosto.V > 0.05:
+    if mosto.phase != 'l' or mosto.V > 0:
         advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
 
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
@@ -128,7 +125,7 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
 def generar_pfd_interactivo(datos_simulacion):
     ruta_svg = "D_eth_sys.svg"
     if not os.path.exists(ruta_svg):
-        return None  # Retornamos None controlado si no encuentra el archivo
+        return None
     
     with open(ruta_svg, "r", encoding="utf-8") as f:
         svg_content = f.read()
@@ -150,7 +147,6 @@ def generar_pfd_interactivo(datos_simulacion):
               onclick="alert('{equipo}\\n{'-'*15}\\n' + '{tooltip_html}'.replace(/<br>/g, '\\n').replace(/<b>/g, '').replace(/<\\/b>/g, ''))"/>
         """
 
-    # Forzado de CSS adaptativo para evitar fallas de renderizado
     estilo_responsivo = """
     <style>
         svg { width: 100% !important; height: auto !important; max-height: 700px; }
@@ -182,143 +178,179 @@ def generar_pfd_interactivo(datos_simulacion):
     </script>
     """
 
-
 # =========================================================================
-# 3. INTERFAZ DE USUARIO (STREAMLIT)
+# 3. PÁGINA DE INICIO (LANDING PAGE)
 # =========================================================================
-st.title("🧪 Simulador Bioetanol: Control Termodinámico y Económico")
-
-# CONFIGURACIÓN DE LA BARRA LATERAL
-st.sidebar.header("🌡️ Parámetros Proceso")
-f_w = st.sidebar.slider("Agua (kg/h)", 100, 3000, 900)
-f_e = st.sidebar.slider("Etanol (kg/h)", 50, 2000, 100)
-t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 10, 50, 25)
-t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 70, 500, 92)
-p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 15.0, 1.0, step=0.1)
-
-st.sidebar.divider()
-st.sidebar.header("💰 Parámetros Económicos")
-p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 0.25, 0.085, step=0.005)
-p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.0001, 0.01, 0.0005, step=0.0001, format="%.4f")
-p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.01, 0.10, 0.025, step=0.005)
-p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 0.50, 0.05, step=0.01)
-p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
-
-if st.sidebar.button("Simular Proceso", type="primary"):
-    dm, de, ec, pf, adv, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
-                                                 p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
-    if err:
-        st.error(err)
-    else:
-        st.session_state['resultados'] = (dm, de, ec, pf, adv)
-
-
-# =========================================================================
-# 4. DESPLIEGUE ÚNICO DE RESULTADOS (BLOQUE BLINDADO)
-# =========================================================================
-if 'resultados' in st.session_state:
-    # 🛡️ UNIFICACIÓN DE DESEMPAQUETADO (5 ELEMENTOS SIEMPRE)
-    dm, de, ec, pf, advs = st.session_state['resultados']
-    
-    # --- MOSTRAR ALERTA ÚNICA SOLICITADA ---
-    if advs:
-        for alerta in advs:
-            st.warning(alerta)
-        st.divider()
-
-    # --- DISEÑO DE FILAS Y COLUMNAS ---
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📊 Balances de Materia")
-        st.dataframe(dm, use_container_width=True)
-        
-        st.subheader("📈 Economía")
-        st.table(pd.DataFrame(list(ec.items()), columns=["Indicador", "Valor"]))
-        
-    with col2:
-        st.subheader("⚡ Energía")
-        st.dataframe(de, use_container_width=True)
-        
-        # --- TUTOR IA INTERACTIVO ---
-        st.divider()
-        st.subheader("🤖 Tutor IA Interactivo")
-        api_key = st.secrets.get("GEMINI_API_KEY")
-        
-        if api_key:
-            user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
-            if st.button("Enviar al Tutor"):
-                if user_question:
-                    with st.spinner('Analizando...'):
-                        genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-2.5-pro')
-                        contexto = f"""
-                        Eres un experto en ingeniería química.
-                        Resultados: {dm.to_string()}
-                        Economía: {ec}
-                        Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
-                        Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
-                        Responde en <250 palabras de forma didáctica.
-                        """
-                        full_prompt = f"{contexto}\n\nPregunta: {user_question}"
-                        try:
-                            response = model.generate_content(full_prompt)
-                            st.info(response.text)
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-                else:
-                    st.warning("Escribe una pregunta.")
-        else:
-            st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
-
-    # --- SOPORTE IMAGEN ESTÁTICA ---
-    if pf and os.path.exists(pf):
-        st.divider()
-        st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
-
-    # =========================================================================
-    # 5. INTEGRACIÓN DINÁMICA DEL SVG (GEMELO DIGITAL)
-    # =========================================================================
-    # Extracción segura de datos para los tooltips
-    row_p_final = dm[dm['Corriente'] == 'Producto_Final']
-    if not row_p_final.empty:
-        p_bar = row_p_final['Presión (bar)'].values[0]
-        p_atm = round(p_bar / 1.01325, 3)
-        t_c = row_p_final['Temp (°C)'].values[0]
-        f_mass = row_p_final['Flujo (kg/h)'].values[0]
-        pct_eth = row_p_final['% Etanol'].values[0]
-        pct_agua = row_p_final['% Agua'].values[0]
-    else:
-        t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
-
-    # Preparación del diccionario dinámico para los tooltips
-    datos_actualizados = {
-        "P110": {"Potencia": f"{de[de['Equipo']=='P110']['Potencia (kW)'].values[0] if 'P110' in de['Equipo'].values else '0.0'} kW"},
-        "W210": {"Carga Térmica": f"{de[de['Equipo']=='W210']['Calor (kW)'].values[0] if 'W210' in de['Equipo'].values else 'Recuperación'} kW"},
-        "W310": {"Calor (Vapor)": f"{de[de['Equipo']=='W310']['Calor (kW)'].values[0] if 'W310' in de['Equipo'].values else '0.0'} kW"},
-        "V411": {"Presión": f"{dm[dm['Corriente']=='Mezcla_Bifasica']['Presión (bar)'].values[0] if 'Mezcla_Bifasica' in dm['Corriente'].values else '1.0'} bar"},
-        "K410": {
-            "Temp": f"{dm[dm['Corriente']=='Vapor_caliente']['Temp (°C)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '92.17'} °C",
-            "Presión": f"{dm[dm['Corriente']=='Vapor_caliente']['Presión (bar)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '1.00'} bar"
-        },
-        "W510": {"Calor (Enf.)": f"{de[de['Equipo']=='W510']['Calor (kW)'].values[0] if 'W510' in de['Equipo'].values else '0.0'} kW"},
-        "P510": {"Potencia": f"{de[de['Equipo']=='P510']['Potencia (kW)'].values[0] if 'P510' in de['Equipo'].values else '0.0'} kW"},
-        "Producto Final": {
-            "Temperatura": f"{t_c} °C",
-            "Presión": f"{p_atm} atm",
-            "Flujo Másico": f"{f_mass} kg/h",
-            "% Etanol": pct_eth,
-            "% Agua": pct_agua
-        }
-    }
-
+def mostrar_inicio():
+    st.title("🚀 Simulador Avanzado de Bioetanol Pro v5")
+    st.subheader("Plataforma de Optimización Termodinámica y Gemelo Digital de Procesos")
     st.divider()
-    st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.markdown("""
+        ### 🧪 Sobre la Aplicación
+        Esta plataforma interactiva está diseñada para simular, auditar y optimizar el proceso de **purificación rápida y separación flash de Bioetanol**. Utilizando rigurosidad científica de nivel industrial, el software enlaza modelos analíticos avanzados con balances económicos en tiempo real.
+
+        ### ⚙️ Características Principales
+        *   **Cálculo Termodinámico Riguroso:** Respaldado por el framework *BioSTEAM* y *Thermosteam* para asegurar balances de masa y energía exactos en mezclas no ideales de Etanol y Agua.
+        *   **Gemelo Digital Interactivo:** Visualización dinámica a través de un diagrama PFD embebido en SVG con lecturas operativas al pasar el cursor sobre los equipos.
+        *   **Análisis Económico (TEA):** Monitoreo instantáneo del Costo de Producción, ROI (Retorno de Inversión), y el valor neto actual (NPV) del diseño.
+        *   **Tutor Inteligente Integrado:** Consultas analíticas potenciadas por IA para resolver dudas de diseño y optimizar variables operativas.
+        """)
+        
+        st.write("")
+        # Botón con redirección y limpieza para evitar atascos de código
+        if st.button("💻 Ingresar al Simulador de Procesos", type="primary", use_container_width=True):
+            st.session_state['pagina'] = 'simulacion'
+            st.rerun()
+
+    with col2:
+        st.info("""
+        **💡 Nota de Uso:**
+        Para un rendimiento óptimo, asegúrate de mantener la corriente de alimentación en rangos de líquido subenfriado para evitar la cavitación en la bomba de carga inicial P-110.
+        """)
+        st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
+
+# =========================================================================
+# 4. PÁGINA DEL SIMULADOR (TU CÓDIGO ORIGINAL MODULARIZADO)
+# =========================================================================
+def mostrar_simulacion():
+    # Botón discreto en la barra lateral para volver a la Home
+    if st.sidebar.button("🏠 Volver a Inicio"):
+        st.session_state['pagina'] = 'inicio'
+        st.rerun()
+
+    st.title("🌡️ Panel de Simulación y Control Operativo")
     
-    html_interactivo = generar_pfd_interactivo(datos_actualizados)
-    
-    if html_interactivo is None:
-        st.error("🚨 **Error de visualización:** El archivo `'D_eth_sys.svg'` no fue localizado en el servidor. Revisa que esté subido en la raíz de GitHub con ese nombre exacto (sensible a mayúsculas).")
+    # CONFIGURACIÓN DE LA BARRA LATERAL
+    st.sidebar.header("🌡️ Parámetros Proceso")
+    f_w = st.sidebar.slider("Agua (kg/h)", 100, 3000, 900)
+    f_e = st.sidebar.slider("Etanol (kg/h)", 50, 2000, 100)
+    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 10, 50, 25)
+    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 70, 500, 92)
+    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 15.0, 1.0, step=0.1)
+
+    st.sidebar.divider()
+    st.sidebar.header("💰 Parámetros Económicos")
+    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 0.25, 0.085, step=0.005)
+    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.0001, 0.01, 0.0005, step=0.0001, format="%.4f")
+    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.01, 0.10, 0.025, step=0.005)
+    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 0.50, 0.05, step=0.01)
+    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
+
+    if st.sidebar.button("Simular Proceso", type="primary"):
+        dm, de, ec, pf, adv, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
+                                                     p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
+        if err:
+            st.error(err)
+        else:
+            st.session_state['resultados'] = (dm, de, ec, pf, adv)
+
+    # DESPLIEGUE ÚNICO DE RESULTADOS
+    if 'resultados' in st.session_state:
+        dm, de, ec, pf, advs = st.session_state['resultados']
+        
+        if advs:
+            for alerta in advs:
+                st.warning(alerta)
+            st.divider()
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("📊 Balances de Materia")
+            st.dataframe(dm, use_container_width=True)
+            st.subheader("📈 Economía")
+            st.table(pd.DataFrame(list(ec.items()), columns=["Indicador", "Valor"]))
+            
+        with col2:
+            st.subheader("⚡ Energía")
+            st.dataframe(de, use_container_width=True)
+            
+            st.divider()
+            st.subheader("🤖 Tutor IA Interactivo")
+            api_key = st.secrets.get("GEMINI_API_KEY")
+            
+            if api_key:
+                user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
+                if st.button("Enviar al Tutor"):
+                    if user_question:
+                        with st.spinner('Analizando...'):
+                            genai.configure(api_key=api_key)
+                            model = genai.GenerativeModel('gemini-2.5-pro')
+                            contexto = f"""
+                            Eres un experto en ingeniería química.
+                            Resultados: {dm.to_string()}
+                            Economía: {ec}
+                            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
+                            Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
+                            Responde en <250 palabras de forma didáctica.
+                            """
+                            full_prompt = f"{contexto}\n\nPregunta: {user_question}"
+                            try:
+                                response = model.generate_content(full_prompt)
+                                st.info(response.text)
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                    else:
+                        st.warning("Escribe una pregunta.")
+            else:
+                st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
+
+        if pf and os.path.exists(pf):
+            st.divider()
+            st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
+
+        # INTEGRACIÓN DINÁMICA DEL SVG (GEMELO DIGITAL)
+        row_p_final = dm[dm['Corriente'] == 'Producto_Final']
+        if not row_p_final.empty:
+            p_bar = row_p_final['Presión (bar)'].values[0]
+            p_atm = round(p_bar / 1.01325, 3)
+            t_c = row_p_final['Temp (°C)'].values[0]
+            f_mass = row_p_final['Flujo (kg/h)'].values[0]
+            pct_eth = row_p_final['% Etanol'].values[0]
+            pct_agua = row_p_final['% Agua'].values[0]
+        else:
+            t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
+
+        datos_actualizados = {
+            "P110": {"Potencia": f"{de[de['Equipo']=='P110']['Potencia (kW)'].values[0] if 'P110' in de['Equipo'].values else '0.0'} kW"},
+            "W210": {"Carga Térmica": f"{de[de['Equipo']=='W210']['Calor (kW)'].values[0] if 'W210' in de['Equipo'].values else 'Recuperación'} kW"},
+            "W310": {"Calor (Vapor)": f"{de[de['Equipo']=='W310']['Calor (kW)'].values[0] if 'W310' in de['Equipo'].values else '0.0'} kW"},
+            "V411": {"Presión": f"{dm[dm['Corriente']=='Mezcla_Bifasica']['Presión (bar)'].values[0] if 'Mezcla_Bifasica' in dm['Corriente'].values else '1.0'} bar"},
+            "K410": {
+                "Temp": f"{dm[dm['Corriente']=='Vapor_caliente']['Temp (°C)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '92.17'} °C",
+                "Presión": f"{dm[dm['Corriente']=='Vapor_caliente']['Presión (bar)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '1.00'} bar"
+            },
+            "W510": {"Calor (Enf.)": f"{de[de['Equipo']=='W510']['Calor (kW)'].values[0] if 'W510' in de['Equipo'].values else '0.0'} kW"},
+            "P510": {"Potencia": f"{de[de['Equipo']=='P510']['Potencia (kW)'].values[0] if 'P510' in de['Equipo'].values else '0.0'} kW"},
+            "Producto Final": {
+                "Temperatura": f"{t_c} °C",
+                "Presión": f"{p_atm} atm",
+                "Flujo Másico": f"{f_mass} kg/h",
+                "% Etanol": pct_eth,
+                "% Agua": pct_agua
+            }
+        }
+
+        st.divider()
+        st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
+        
+        html_interactivo = generar_pfd_interactivo(datos_actualizados)
+        
+        if html_interactivo is None:
+            st.error("🚨 **Error de visualización:** El archivo `'D_eth_sys.svg'` no fue localizado en el servidor. Revisa que esté subido en la raíz de GitHub con ese nombre exacto.")
+        else:
+            st.info("Pasa el mouse sobre los componentes o la línea de Producto Final para auditar los resultados en vivo.")
+            components.html(html_interactivo, height=750, scrolling=True)
     else:
-        st.info("Pasa el mouse sobre los componentes o la línea de Producto Final para auditar los resultados en vivo.")
-        components.html(html_interactivo, height=750, scrolling=True)
+        st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
+
+# =========================================================================
+# 5. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
+# =========================================================================
+if st.session_state['pagina'] == 'inicio':
+    mostrar_inicio()
+elif st.session_state['pagina'] == 'simulacion':
+    mostrar_simulacion()
