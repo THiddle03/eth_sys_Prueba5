@@ -183,17 +183,6 @@ if 'resultados' in st.session_state:
         st.subheader("🤖 Tutor IA Interactivo")
         # ... (Tu código de Gemini se mantiene aquí abajo igual)
 
-    # --- GEMELO DIGITAL (AL FINAL O DONDE PREFIERAS) ---
-    st.divider()
-    st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
-    
-    html_interactivo = generar_pfd_interactivo(datos_actualizados)
-    if html_interactivo is None:
-        st.error("🚨 **Error de archivo:** No se encontró 'D_eth_sys.svg' en el servidor. Verifica el nombre en tu repositorio.")
-    else:
-        st.info("Pasa el mouse sobre el diagrama para auditar los resultados dinámicos.")
-        components.html(html_interactivo, height=750, scrolling=True)
-
     # (El resto de tu código para mostrar PFD, balances y tablas se mantiene igual)
 
   
