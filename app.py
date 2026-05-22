@@ -223,6 +223,7 @@ if 'resultados' in st.session_state:
 # 1. MAPEO DE COORDENADAS (AJUSTE FINO)
 # Basado en las dimensiones del nuevo archivo D_eth_sys.svg
 # Formato: [X, Y, Ancho, Alto]
+
 ZONAS_EQUIPOS = {
     "P-110": [160, 5, 55, 55],
     "W-210": [365, 85, 75, 75],
@@ -230,7 +231,8 @@ ZONAS_EQUIPOS = {
     "V-411": [620, 370, 60, 45],
     "K-410": [800, 300, 95, 180],
     "W-510": [935, 450, 80, 90],
-    "P-510": [1010, 650, 60, 65]
+    "P-510": [1010, 650, 60, 65],
+    "Corriente-9": [1020, 480, 60, 25]  # <-- NUEVA ZONA: [X, Y, Ancho, Alto] sobre la línea 9
 }
 
 def generar_pfd_interactivo(datos_simulacion):
@@ -292,29 +294,46 @@ def generar_pfd_interactivo(datos_simulacion):
 if 'resultados' in st.session_state:
     dm, de, ec, pf = st.session_state['resultados']
     
-    # Extraer valores reales de la simulación actual
-    # Se usan valores por defecto del DFP [cite: 9, 23, 32, 48] si la unidad no está en la tabla
-    # Dentro de: if 'resultados' in st.session_state:
+    # --- EXTRACCIÓN SEGURA DE LA CORRIENTE 9 (Producto_Final) ---
+    row_p_final = dm[dm['Corriente'] == 'Producto_Final']
+    if not row_p_final.empty:
+        # Extraemos y convertimos la presión de bar a atm (1 bar ≈ 0.9869 atm)
+        p_bar = row_p_final['Presión (bar)'].values[0]
+        p_atm = round(p_bar / 1.01325, 3)
+        
+        t_c = row_p_final['Temp (°C)'].values[0]
+        f_mass = row_p_final['Flujo (kg/h)'].values[0]
+        pct_eth = row_p_final['% Etanol'].values[0]
+        pct_agua = row_p_final['% Agua'].values[0]
+    else:
+        t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
+
+    # Diccionario de datos que alimentará los tooltips del SVG
     datos_actualizados = {
         "P110": {"Potencia": f"{de[de['Equipo']=='P110']['Potencia (kW)'].values[0] if 'P110' in de['Equipo'].values else '0.0'} kW"},
         "W210": {"Carga Térmica": f"{de[de['Equipo']=='W210']['Calor (kW)'].values[0] if 'W210' in de['Equipo'].values else 'Recuperación'} kW"},
         "W310": {"Calor (Vapor)": f"{de[de['Equipo']=='W310']['Calor (kW)'].values[0] if 'W310' in de['Equipo'].values else '0.0'} kW"},
         "V411": {"Presión": f"{dm[dm['Corriente']=='Mezcla_Bifasica']['Presión (bar)'].values[0] if 'Mezcla_Bifasica' in dm['Corriente'].values else '1.0'} bar"},
-         "K410": {
+        "K410": {
             "Temp": f"{dm[dm['Corriente']=='Vapor_caliente']['Temp (°C)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '92.17'} °C",
             "Presión": f"{dm[dm['Corriente']=='Vapor_caliente']['Presión (bar)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '1.00'} bar"
         },
         "W510": {"Calor (Enf.)": f"{de[de['Equipo']=='W510']['Calor (kW)'].values[0] if 'W510' in de['Equipo'].values else '0.0'} kW"},
-        "P510": {"Potencia": f"{de[de['Equipo']=='P510']['Potencia (kW)'].values[0] if 'P510' in de['Equipo'].values else '0.0'} kW"}
+        "P510": {"Potencia": f"{de[de['Equipo']=='P510']['Potencia (kW)'].values[0] if 'P510' in de['Equipo'].values else '0.0'} kW"},
+        
+        # Al limpiar "Corriente-9" con .replace("-", ""), buscará la clave "Corriente9"
+        "Corriente9": {
+            "Temperatura": f"{t_c} °C",
+            "Presión": f"{p_atm} atm",
+            "Flujo Másico": f"{f_mass} kg/h",
+            "% Etanol": pct_eth,
+            "% Agua": pct_agua
+        }
     }
 
-
-
-
-    
     st.divider()
     st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
-    st.info("Pasa el mouse sobre el diagrama para auditar los resultados dinámicos.")
+    st.info("Pasa el mouse sobre el diagrama o la línea de corriente 9 para auditar los resultados dinámicos.")
     
     # Renderizar el componente
     html_interactivo = generar_pfd_interactivo(datos_actualizados)
