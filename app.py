@@ -119,7 +119,7 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
 
     # 🕵️‍♂️ LÓGICA DE ADVERTENCIA CRÍTICA SOLICITADA
     advertencias = []
-    if mosto.phase != 'l' or mosto.V > 0:
+    if mosto.phase != 'l' or mosto.V > 0.05:
         advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
 
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
