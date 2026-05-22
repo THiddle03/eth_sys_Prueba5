@@ -162,7 +162,6 @@ def generar_pfd_interactivo(datos_simulacion):
 
     return f"""
     <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
-        {estilo_responsivo}
         <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
              color: #00ffcc; padding: 12px; border-radius: 8px; font-family: 'Segoe UI', Tahoma; 
              font-size: 13px; z-index: 10000; pointer-events: none; border: 1px solid #00ffcc;
