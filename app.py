@@ -182,16 +182,17 @@ def generar_pfd_interactivo(datos_simulacion):
 # 3. PÁGINA DE INICIO (LANDING PAGE)
 # =========================================================================
 def mostrar_inicio():
-    st.title("🚀 Simulador Avanzado de Bioetanol Pro v5")
-    st.subheader("Plataforma de Optimización Termodinámica y Gemelo Digital de Procesos")
+    st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
+    st.subheader("Plataforma con Interfaz de Streamlit, simulada en Python con el programa BioSTEAM")
     st.divider()
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
         st.markdown("""
-        ### 🧪 Sobre la Aplicación
-        Esta plataforma interactiva está diseñada para simular, auditar y optimizar el proceso de **purificación rápida y separación flash de Bioetanol**. Utilizando rigurosidad científica de nivel industrial, el software enlaza modelos analíticos avanzados con balances económicos en tiempo real.
+        ### 🧪 Sobre el Proceso
+       La planta tiene como objetivo concentrar una corriente de alimentación de "Mosto"(solución acuosa de etanol en agua) mediante una separación flash adiabática.
+       Se considera una coreinte de recirculación de la corriente de fondo del separador flash "Vinazas" para precalentar la alimentación y reducir el consumo energético.
 
         ### ⚙️ Características Principales
         *   **Cálculo Termodinámico Riguroso:** Respaldado por el framework *BioSTEAM* y *Thermosteam* para asegurar balances de masa y energía exactos en mezclas no ideales de Etanol y Agua.
