@@ -45,18 +45,18 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     agua = bst.HeatUtility.get_agent("cooling_water")
     agua.heat_transfer_price = precio_agua
 
-    mosto = bst.Stream("1_MOSTO", Water=900, Ethanol=100, units="kg/hr",
+    mosto = bst.Stream("1_Mosto", Water=900, Ethanol=100, units="kg/hr",
                        T=temp_mosto + 273.15, P=101325)
     mosto.price = precio_mp
-    vinazas_retorno = bst.Stream("Vinazas_Retorno", T=95+273.15, P=3*101325)
+    vinazas_retorno = bst.Stream("10_Vinazas_Retorno", T=95+273.15, P=3*101325)
 
-    P110 = bst.Pump("P110", ins=mosto, P=4*101325)
-    W210 = bst.HXprocess("W210", ins=(P110-0, vinazas_retorno), outs=("3_Mosto_Pre", "Drenaje"), phase0="l", phase1="l")
+    P110 = bst.Pump("P110", ins=mosto, P=4*101325, outs=("2_Mosto_Presión"))
+    W210 = bst.HXprocess("W210", ins=(P110-0, vinazas_retorno), outs=("4_Mosto_Pre", "3_Drenaje"), phase0="l", phase1="l")
     W210.outs[0].T = 85 + 273.15
-    W310 = bst.HXutility("W310", ins=W210-0, outs="Mezcla", T=T_flash+273.15)
-    V411 = bst.IsenthalpicValve("V411", ins=W310-0, outs="Mezcla_Bifasica", P=P_flash*101325)
-    K410 = bst.Flash("K410", ins=V411-0, outs=("Vapor_caliente", "Vinazas"), P=P_flash*101325, Q=0)
-    W510 = bst.HXutility("W510", ins=K410-0, outs="Producto_Final", T=25+273.15)
+    W310 = bst.HXutility("W310", ins=W210-0, outs="5_Líquido_Caliente", T=T_flash+273.15)
+    V411 = bst.IsenthalpicValve("V411", ins=W310-0, outs="6_Mezcla_Flash", P=P_flash*101325)
+    K410 = bst.Flash("K410", ins=V411-0, outs=("7_Vapor", "8_Vinazas"), P=P_flash*101325, Q=0)
+    W510 = bst.HXutility("W510", ins=K410-0, outs="9_Producto_Final", T=25+273.15)
     
     producto = W510.outs[0]
     producto.price = precio_etanol
