@@ -241,7 +241,7 @@ def mostrar_simulacion():
     
     # CONFIGURACIÓN DE LA BARRA LATERAL
     st.sidebar.header("🌡️ Parámetros Proceso")
-    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 110, 50)
+    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 150, 50)
     t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
     p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 10.0, 1.0, step=0.1)
 
