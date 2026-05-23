@@ -4,9 +4,11 @@ import plotly.express as px
 import numpy as np
 
 
+# En sensibilidad.py
 
+# Modifica la primera línea para recibir las variables:
+    def mostrar_sensibilidad(eth_sys, mosto, K410):
 
-from app import mostrar_sensibilidad
 
     st.title("📊 Análisis de Sensibilidad Avanzado")
     
