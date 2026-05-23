@@ -403,12 +403,7 @@ def mostrar_simulacion():
 if st.session_state['pagina'] == 'inicio':
     mostrar_inicio()
 elif st.session_state['pagina'] == 'simulacion':
-    mostrar_simulacion()
-# En app.py (al final del archivo, en tu enrutador de páginas)
-
-if st.session_state['pagina'] == 'simulacion':
-    mostrar_simulacion()
-    
+    mostrar_simulacion()    
 elif st.session_state['pagina'] == 'sensibilidad':
     from sensibilidad import mostrar_sensibilidad
     
