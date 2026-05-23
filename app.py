@@ -63,7 +63,7 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
     producto.price = precio_etanol
     P510 = bst.Pump("P510", ins=K410-1, outs=vinazas_retorno, P=3*101325)
 
-    eth_sys = bst.System("planta_etanol", path=(P110, W210, W310, V411, K410, W510, P510))
+    eth_sys = bst.System("eth_sys", path=(P110, W210, W310, V411, K410, W510, P510))
     
     try:
         eth_sys.simulate()
@@ -410,4 +410,4 @@ elif st.session_state['pagina'] == 'sensibilidad':
     # ¡Aquí pasas los objetos reales que creaste en tu simulación!
     # Nota: Asegúrate de que 'eth_sys', 'mosto' y 'K410' estén definidos de forma global 
     # en tu app.py o impórtalos desde donde construyas tu sistema BioSTEAM.
-    mostrar_sensibilidad(planta_etanol, mosto, W310, K410)
+    mostrar_sensibilidad(eth_sys, mosto, P110, W210, W310, V411, K410, W510, P510)
