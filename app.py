@@ -248,7 +248,21 @@ def mostrar_simulacion():
     p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
 
     if st.sidebar.button("Simular Proceso", type="primary"):
-        dm, de, ec, pf, adv, err = correr_simulacion(t_mosto, t_flash, p_flash, p_elec, p_agua_c, p_vapor, p_mp, p_etanol)
+        # Llamada explícita por nombre. Si no usas los sliders de flujo, 
+        # les pasamos un valor fijo directamente aquí (ej. 900 y 100)
+        dm, de, ec, pf, adv, err = correr_simulacion(
+            flow_water=900,  
+            flow_eth=100,    
+            temp_mosto=t_mosto,
+            T_flash=t_flash,
+            P_flash=p_flash,
+            precio_elec=p_elec,
+            precio_vapor=p_vapor,
+            precio_agua=p_agua_c,
+            precio_mp=p_mp,
+            precio_etanol=p_etanol
+        )
+        
         if err:
             st.error(err)
         else:
