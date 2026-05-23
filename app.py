@@ -6,6 +6,8 @@ import google.generativeai as genai
 import os
 import uuid
 import streamlit.components.v1 as components
+import plotly.express as px
+import numpy as np
 
 # =========================================================================
 # 1. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
