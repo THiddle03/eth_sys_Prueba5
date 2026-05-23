@@ -14,10 +14,10 @@ st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
 # Mapeo de coordenadas para el archivo D_eth_sys.svg
 ZONAS_EQUIPOS = {
-    "P-110": [170, 30, 55, 55],
+    "P-110": [170, 40, 55, 55],
     "W-210": [375, 95, 95, 75],
     "W-310": [510, 290, 80, 70],
-    "V-411": [650, 390, 60, 45],
+    "V-411": [660, 390, 60, 45],
     "K-410": [825, 320, 95, 180],
     "W-510": [975, 490, 80, 90],
     "P-510": [1040, 675, 60, 45],
