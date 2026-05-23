@@ -411,4 +411,4 @@ from sensibilidad import mostrar_sensibilidad
     # ¡Aquí pasas los objetos reales que creaste en tu simulación!
     # Nota: Asegúrate de que 'eth_sys', 'mosto' y 'K410' estén definidos de forma global 
     # en tu app.py o impórtalos desde donde construyas tu sistema BioSTEAM.
-    mostrar_sensibilidad(eth_sys, mosto, W310, K410)
+mostrar_sensibilidad(eth_sys, mosto, W310, K410)
