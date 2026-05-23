@@ -110,6 +110,14 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
                       WC_over_FCI=0.05, startup_months=6, startup_FOCfrac=0.5, startup_VOCfrac=0.5,
                       startup_salesfrac=0.5, finance_interest=0, finance_years=0, finance_fraction=0)
     tea.IRR = 0.0
+    sistema.simulate()
+
+    # CONTROL DE SEGURIDAD: Validar si la corriente tiene masa
+    if producto.F_mass == 0:
+    # Devolvemos un mensaje amigable en el último elemento (err)
+    return None, None, None, None, None, "Error: El flujo de etanol es 0 kg/h. Revisa que las temperaturas y presiones de los sliders permitan la separación del etanol."
+
+    # Si tiene masa, procedemos normalmente
     costo_p = tea.solve_price(producto)
     ind_econ = {"Costo Producción ($/kg)": round(costo_p, 3), "Precio Venta ($/kg)": round(precio_etanol, 3),
                 "NPV (MUSD)": round(tea.NPV/1e6, 2), "ROI (%)": round(tea.ROI*100, 1), "PBP (Años)": round(tea.PBP, 2)}
@@ -237,7 +245,7 @@ def mostrar_simulacion():
     # CONFIGURACIÓN DE LA BARRA LATERAL
     st.sidebar.header("🌡️ Parámetros Proceso")
     t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 95, 50)
-    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 25, 130, 90)
+    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
     p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 10.0, 1.0, step=0.1)
 
     st.sidebar.divider()
