@@ -120,6 +120,13 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     ind_econ = {"Costo Producción ($/kg)": round(costo_p, 3), "Precio Venta ($/kg)": round(precio_etanol, 3),
                 "NPV (MUSD)": round(tea.NPV/1e6, 2), "ROI (%)": round(tea.ROI*100, 1), "PBP (Años)": round(tea.PBP, 2)}
 
+    datos_ec = []
+    for s in eth_sys.TEA:
+            datos_ec.append({
+                "Indicador": s.ID,
+                "Valor": round(s.tea)
+            })
+                          
     p_path = f"pfd_{uuid.uuid4().hex[:8]}.png"
     try:
         eth_sys.diagram(file=p_path.replace(".png", ""), format="png", display=False)
