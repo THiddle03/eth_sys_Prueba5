@@ -253,7 +253,7 @@ def mostrar_simulacion():
 
     if st.sidebar.button("Simular Proceso", type="primary"):
         # Ahora hay una correspondencia 1 a 1 exacta de 8 variables
-        dm, de, ec, pf, adv, err = correr_simulacion(
+        dm, de, ec, pf, err = correr_simulacion(
             t_mosto, 
             t_flash, 
             p_flash, 
@@ -267,7 +267,7 @@ def mostrar_simulacion():
         if err:
             st.error(err)
         else:
-            st.session_state['resultados'] = (dm, de, ec, pf, adv)
+            st.session_state['resultados'] = (dm, de, ec, pf)
 # =========================================================================
 # 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
 # =========================================================================
