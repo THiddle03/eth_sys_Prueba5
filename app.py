@@ -110,8 +110,6 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
                       WC_over_FCI=0.05, startup_months=6, startup_FOCfrac=0.5, startup_VOCfrac=0.5,
                       startup_salesfrac=0.5, finance_interest=0, finance_years=0, finance_fraction=0)
     tea.IRR = 0.0
-    sistema.simulate()
-
     # CONTROL DE SEGURIDAD: Validar si la corriente tiene masa
     if producto.F_mass == 0:
     # Devolvemos un mensaje amigable en el último elemento (err)
