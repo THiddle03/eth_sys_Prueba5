@@ -288,7 +288,7 @@ def mostrar_simulacion():
             st.subheader("📊 Balances de Materia")
             st.dataframe(dm, use_container_width=True)
             st.subheader("📈 Economía")
-            st.table(pd.DataFrame(list(ec.items()), columns=["Indicador", "Valor"]))
+            st.dataFrame(ec,use_container_width=True)
             
         with col2:
             st.subheader("⚡ Energía")
