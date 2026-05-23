@@ -14,11 +14,11 @@ st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
 # Mapeo de coordenadas para el archivo D_eth_sys.svg
 ZONAS_EQUIPOS = {
-    "P-110": [170, 60, 55, 55],
+    "P-110": [170, 85, 55, 55],
     "W-210": [375, 95, 95, 75],
     "W-310": [510, 290, 80, 70],
     "V-411": [660, 390, 60, 45],
-    "K-410": [845, 320, 95, 180],
+    "K-410": [855, 320, 95, 180],
     "W-510": [975, 490, 80, 90],
     "P-510": [1040, 675, 60, 45],
     "Producto Final": [970, 725, 180, 100]
@@ -48,11 +48,11 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     mosto = bst.Stream("1_Mosto", Water=900, Ethanol=100, units="kg/hr",
                        T=temp_mosto + 273.15, P=101325)
     mosto.price = precio_mp
-    vinazas_retorno = bst.Stream("10_Vinazas_Retorno", T=95+273.15, P=3*101325)
+    vinazas_retorno = bst.Stream("10_Vinazas_Retorno", T=T_flash+273.15, P=3*101325)
 
     P110 = bst.Pump("P110", ins=mosto, P=4*101325, outs=("2_Mosto_Presión"))
     W210 = bst.HXprocess("W210", ins=(P110-0, vinazas_retorno), outs=("4_Mosto_Pre", "3_Drenaje"), phase0="l", phase1="l")
-    W210.outs[0].T = 85 + 273.15
+    #W210.outs[0].T = 85 + 273.15
     W310 = bst.HXutility("W310", ins=W210-0, outs="5_Líquido_Caliente", T=T_flash+273.15)
     V411 = bst.IsenthalpicValve("V411", ins=W310-0, outs="6_Mezcla_Flash", P=P_flash*101325)
     K410 = bst.Flash("K410", ins=V411-0, outs=("7_Vapor", "8_Vinazas"), P=P_flash*101325, Q=0)
@@ -363,7 +363,7 @@ def mostrar_simulacion():
             "P110": {"Potencia": f"{de[de['Equipo']=='P110']['Potencia (kW)'].values[0] if 'P110' in de['Equipo'].values else '0.0'} kW"},
             "W210": {"Carga Térmica": f"{de[de['Equipo']=='W210']['Calor (kW)'].values[0] if 'W210' in de['Equipo'].values else 'Recuperación'} kW"},
             "W310": {"Calor (Vapor)": f"{de[de['Equipo']=='W310']['Calor (kW)'].values[0] if 'W310' in de['Equipo'].values else '0.0'} kW"},
-            "V411": {"Presión": f"{dm[dm['Corriente']=='Mezcla_Bifasica']['Presión (bar)'].values[0] if 'Mezcla_Bifasica' in dm['Corriente'].values else '1.0'} bar"},
+            "V411": {"Presión": f"{dm[dm['Corriente']=='Mezcla_Bifasica']['Presión (bar)'].values[0] if '6_Mezcla_Flash' in dm['Corriente'].values else '1.0'} bar"},
             "K410": {
                 "Temp": f"{dm[dm['Corriente']=='Vapor_caliente']['Temp (°C)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '92.17'} °C",
                 "Presión": f"{dm[dm['Corriente']=='Vapor_caliente']['Presión (bar)'].values[0] if 'Vapor_caliente' in dm['Corriente'].values else '1.00'} bar"
