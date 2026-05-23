@@ -31,7 +31,7 @@ if 'pagina' not in st.session_state:
 # =========================================================================
 # 2. FUNCIONES SOURCING Y CÁLCULO (MOTOR BIOSTEAM)
 # =========================================================================
-def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash, 
+def correr_simulacion(temp_mosto, T_flash, P_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
     
     bst.main_flowsheet.clear()
@@ -235,9 +235,9 @@ def mostrar_simulacion():
     
     # CONFIGURACIÓN DE LA BARRA LATERAL
     st.sidebar.header("🌡️ Parámetros Proceso")
-    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 95, 50)
-    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 25, 130, 90)
-    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 10.0, 1.0, step=0.1)
+    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 10, 50, 25)
+    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 70, 500, 92)
+    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 15.0, 1.0, step=0.1)
 
     st.sidebar.divider()
     st.sidebar.header("💰 Parámetros Económicos")
@@ -247,26 +247,13 @@ def mostrar_simulacion():
     p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 0.50, 0.05, step=0.01)
     p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
 
+    # Lógica de Simulación
     if st.sidebar.button("Simular Proceso", type="primary"):
-        # Llamada explícita por nombre. Si no usas los sliders de flujo, 
-        # les pasamos un valor fijo directamente aquí (ej. 900 y 100)
-        dm, de, ec, pf, adv, err = correr_simulacion(
-            flow_water=900,  
-            flow_eth=100,    
-            temp_mosto=t_mosto,
-            T_flash=t_flash,
-            P_flash=p_flash,
-            precio_elec=p_elec,
-            precio_vapor=p_vapor,
-            precio_agua=p_agua_c,
-            precio_mp=p_mp,
-            precio_etanol=p_etanol
-        )
-        
+        dm, de, ec, pf, err = correr_simulacion(t_mosto, t_flash, p_flash, p_elec, p_agua_c,  p_vapor, p_mp, p_etanol)
         if err:
-            st.error(err)
+           st.error(err)
         else:
-            st.session_state['resultados'] = (dm, de, ec, pf, adv)
+           st.session_state['resultados'] = (dm, de, ec, pf)
 
 # =========================================================================
 # 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
