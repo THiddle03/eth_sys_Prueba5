@@ -251,6 +251,10 @@ def mostrar_simulacion():
         st.session_state['pagina'] = 'inicio'
         st.rerun()
 
+    if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
+        st.session_state['pagina'] = 'sensibilidad'
+        st.rerun()
+
     st.title("🌡️ Panel de Simulación y Control Operativo")
     
     # CONFIGURACIÓN DE LA BARRA LATERAL
@@ -399,3 +403,7 @@ if st.session_state['pagina'] == 'inicio':
     mostrar_inicio()
 elif st.session_state['pagina'] == 'simulacion':
     mostrar_simulacion()
+elif st.session_state['pagina'] == 'sensibilidad':
+    # Importación diferida para no ralentizar el inicio de la app
+    from sensibilidad import mostrar_sensibilidad
+    mostrar_sensibilidad()
