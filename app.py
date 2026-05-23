@@ -14,13 +14,13 @@ st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
 # Mapeo de coordenadas para el archivo D_eth_sys.svg
 ZONAS_EQUIPOS = {
-    "P-110": [160, 5, 55, 55],
-    "W-210": [365, 85, 75, 75],
-    "W-310": [500, 280, 70, 70],
-    "V-411": [620, 370, 60, 45],
-    "K-410": [800, 300, 95, 180],
-    "W-510": [935, 450, 80, 90],
-    "P-510": [1015, 650, 60, 45],
+    "P-110": [170, 15, 55, 55],
+    "W-210": [375, 95, 75, 75],
+    "W-310": [510, 290, 70, 70],
+    "V-411": [630, 380, 60, 45],
+    "K-410": [810, 310, 95, 180],
+    "W-510": [945, 460, 80, 90],
+    "P-510": [1025, 660, 60, 45],
     "Producto Final": [970, 725, 180, 100]
 }
 
@@ -387,7 +387,7 @@ def mostrar_simulacion():
         if html_interactivo is None:
             st.error("🚨 **Error de visualización:** El archivo `'D_eth_sys.svg'` no fue localizado en el servidor. Revisa que esté subido en la raíz de GitHub con ese nombre exacto.")
         else:
-            st.info("Pasa el mouse sobre los componentes o la línea de Producto Final para auditar los resultados en vivo.")
+            st.info("Pase el mouse sobre los equipos o la línea de 9_Producto Final para observar los resultados en vivo")
             components.html(html_interactivo, height=750, scrolling=True)
     else:
         st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
