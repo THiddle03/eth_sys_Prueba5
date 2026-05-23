@@ -44,7 +44,7 @@ def correr_simulacion(flow_water, flow_eth, temp_mosto, T_flash, P_flash,
     agua = bst.HeatUtility.get_agent("cooling_water")
     agua.heat_transfer_price = precio_agua
 
-    mosto = bst.Stream("1_MOSTO", Water=flow_water, Ethanol=flow_eth, units="kg/hr",
+    mosto = bst.Stream("1_MOSTO", Water=900, Ethanol=100, units="kg/hr",
                        T=temp_mosto + 273.15, P=101325)
     mosto.price = precio_mp
     vinazas_retorno = bst.Stream("Vinazas_Retorno", T=95+273.15, P=3*101325)
@@ -235,8 +235,8 @@ def mostrar_simulacion():
     
     # CONFIGURACIÓN DE LA BARRA LATERAL
     st.sidebar.header("🌡️ Parámetros Proceso")
-    f_w = st.sidebar.slider("Agua (kg/h)", 100, 3000, 900)
-    f_e = st.sidebar.slider("Etanol (kg/h)", 50, 2000, 100)
+    #f_w = st.sidebar.slider("Agua (kg/h)", 100, 3000, 900)
+    #f_e = st.sidebar.slider("Etanol (kg/h)", 50, 2000, 100)
     t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 10, 50, 25)
     t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 70, 500, 92)
     p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 15.0, 1.0, step=0.1)
@@ -250,7 +250,7 @@ def mostrar_simulacion():
     p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
 
     if st.sidebar.button("Simular Proceso", type="primary"):
-        dm, de, ec, pf, adv, err = correr_simulacion(f_w, f_e, t_mosto, t_flash, p_flash, 
+        dm, de, ec, pf, adv, err = correr_simulacion(t_mosto, t_flash, p_flash, 
                                                      p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
         if err:
             st.error(err)
