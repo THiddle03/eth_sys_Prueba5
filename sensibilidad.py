@@ -35,7 +35,7 @@ for t in t_mosto_rango:
     mosto.T = t + 273.15  # Convertimos el paso actual a Kelvin
     
     # B. ESCENARIO FIJO: Forzamos las condiciones fijas en el separador K410
-    K410.T = t_flash_fija
+    W310.T = t_flash_fija
     K410.P = p_flash_fija
     
     # C. Corremos los balances de materia y energía con la nueva configuración
