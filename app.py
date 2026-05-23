@@ -120,12 +120,19 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     ind_econ = {"Costo Producción ($/kg)": round(costo_p, 3), "Precio Venta ($/kg)": round(precio_etanol, 3),
                 "NPV (MUSD)": round(tea.NPV/1e6, 2), "ROI (%)": round(tea.ROI*100, 1), "PBP (Años)": round(tea.PBP, 2)}
 
-    datos_ec = []
-    for s in eth_sys.TEA:
-            datos_ec.append({
-                "Indicador": s.ID,
-                "Valor": round(s.tea)
-            })
+   # Asumiendo que 'tea' es tu objeto de análisis económico y 'costo_p' es el precio calculado
+    datos_ec = [
+        {"Indicador": "Inversión de Capital Total (TCI)", "Valor": tea.TCI, "Unidad": "USD"},
+        {"Indicador": "Inversión en Capital Fijo (FCI)", "Valor": tea.FCI, "Unidad": "USD"},
+        {"Indicador": "Costo de Operación Anual (AOC)", "Valor": tea.AOC, "Unidad": "USD/año"},
+        {"Indicador": "Costo Operativo Variable (VOC)", "Valor": tea.VOC, "Unidad": "USD/año"},
+        {"Indicador": "Costo Operativo Fijo (FOC)", "Valor": tea.FOC, "Unidad": "USD/año"},
+        {"Indicador": "Ingresos por Ventas Totales", "Valor": tea.sales, "Unidad": "USD/año"},
+        {"Indicador": "Precio Mínimo de Venta (MESP)", "Valor": costo_p, "Unidad": "USD/kg"}
+    ]
+
+    # Convertimos a DataFrame de Pandas
+    df_ec = pd.DataFrame(datos_ec)                       
                           
     p_path = f"pfd_{uuid.uuid4().hex[:8]}.png"
     try:
