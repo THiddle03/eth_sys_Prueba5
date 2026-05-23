@@ -52,7 +52,7 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 
     P110 = bst.Pump("P110", ins=mosto, P=4*101325, outs=("2_Mosto_Presión"))
     W210 = bst.HXprocess("W210", ins=(P110-0, vinazas_retorno), outs=("4_Mosto_Pre", "3_Drenaje"), phase0="l", phase1="l")
-    #W210.outs[0].T = 85 + 273.15
+    W210.outs[0].T = 85 + 273.15
     W310 = bst.HXutility("W310", ins=W210-0, outs="5_Líquido_Caliente", T=t_flash+273.15)
     V411 = bst.IsenthalpicValve("V411", ins=W310-0, outs="6_Mezcla_Flash", P=p_flash*101325)
     K410 = bst.Flash("K410", ins=V411-0, outs=("7_Vapor", "8_Vinazas"), P=p_flash*101325, Q=0)
@@ -348,7 +348,7 @@ def mostrar_simulacion():
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
 # =========================================================================
-        row_p_final = dm[dm['Corriente'] == 'Producto_Final']
+        row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
         if not row_p_final.empty:
             p_bar = row_p_final['Presión (bar)'].values[0]
             p_atm = round(p_bar / 1.01325, 3)
