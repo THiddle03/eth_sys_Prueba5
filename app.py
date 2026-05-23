@@ -405,4 +405,6 @@ if st.session_state['pagina'] == 'inicio':
 elif st.session_state['pagina'] == 'simulacion':
     mostrar_simulacion()    
 elif st.session_state['pagina'] == 'sensibilidad':
+    # Importación diferida para no ralentizar el inicio de la app
     from sensibilidad import mostrar_sensibilidad
+    mostrar_sensibilidad()
