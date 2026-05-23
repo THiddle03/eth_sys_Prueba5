@@ -406,7 +406,6 @@ elif st.session_state['pagina'] == 'simulacion':
     mostrar_simulacion()    
 # En app.py (al final del archivo, en tu enrutador de páginas) 
 elif st.session_state['pagina'] == 'sensibilidad':
-    mostrar_sensibilidad(eth_sys, mosto, W310, K410)
 from sensibilidad import mostrar_sensibilidad
     # ¡Aquí pasas los objetos reales que creaste en tu simulación!
     # Nota: Asegúrate de que 'eth_sys', 'mosto' y 'K410' estén definidos de forma global 
