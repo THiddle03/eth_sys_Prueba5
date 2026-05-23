@@ -34,9 +34,6 @@ if 'pagina' not in st.session_state:
 def correr_simulacion(temp_mosto, T_flash, P_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
     
-    # Colocamos los flujos fijos aquí adentro como constantes
-    flow_water = 900
-    flow_eth = 100
                           
     bst.main_flowsheet.clear()
     chemicals = tmo.Chemicals(["Water", "Ethanol"])
@@ -48,7 +45,7 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     agua = bst.HeatUtility.get_agent("cooling_water")
     agua.heat_transfer_price = precio_agua
 
-    mosto = bst.Stream("1_MOSTO", Water=flow_water, Ethanol=flow_eth, units="kg/hr",
+    mosto = bst.Stream("1_MOSTO", Water=900, Ethanol=100, units="kg/hr",
                        T=temp_mosto + 273.15, P=101325)
     mosto.price = precio_mp
     vinazas_retorno = bst.Stream("Vinazas_Retorno", T=95+273.15, P=3*101325)
