@@ -6,7 +6,7 @@ import numpy as np
 # En sensibilidad.py
 
 # Modifica la primera línea para recibir las variables:
-mostrar_sensibilidad(eth_sys, mosto, P110, W210, W310, V411, K410, W510, P510):
+mostrar_sensibilidad(eth_sys, mosto, W310, K410):
     st.title("📊 Análisis de Sensibilidad Avanzado")
     
     # Botón para regresar
