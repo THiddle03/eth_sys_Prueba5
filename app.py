@@ -252,16 +252,6 @@ def mostrar_simulacion():
         st.session_state['pagina'] = 'inicio'
         st.rerun()
 
-    if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
-        # Guardamos una copia de los sliders actuales como valores base
-        st.session_state['params_base'] = {
-            't_mosto': t_mosto, 't_flash': t_flash, 'p_flash': p_flash,
-            'p_elec': p_elec, 'p_vapor': p_vapor, 'p_agua_c': p_agua_c,
-            'p_mp': p_mp, 'p_etanol': p_etanol
-              }
-        st.session_state['pagina'] = 'sensibilidad'
-        st.rerun()
-
     st.title("🌡️ Panel de Simulación y Control Operativo")
     
     # CONFIGURACIÓN DE LA BARRA LATERAL
@@ -297,6 +287,17 @@ def mostrar_simulacion():
             # 2. Guardamos las 5 variables necesarias en la sesión (añadimos 'advs')
             st.session_state['resultados'] = (dm, de, ec, pf, advs)
             st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
+
+    if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
+        # Guardamos una copia de los sliders actuales como valores base
+        st.session_state['params_base'] = {
+            't_mosto': t_mosto, 't_flash': t_flash, 'p_flash': p_flash,
+            'p_elec': p_elec, 'p_vapor': p_vapor, 'p_agua_c': p_agua_c,
+            'p_mp': p_mp, 'p_etanol': p_etanol
+              }
+        st.session_state['pagina'] = 'sensibilidad'
+        st.rerun()
+
 # =========================================================================
 # 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
 # =========================================================================
