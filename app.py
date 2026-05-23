@@ -14,7 +14,7 @@ st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
 # Mapeo de coordenadas para el archivo D_eth_sys.svg
 ZONAS_EQUIPOS = {
-    "P-110": [170, 85, 55, 55],
+    "P-110": [170, 55, 55, 55],
     "W-210": [375, 95, 95, 75],
     "W-310": [510, 290, 80, 70],
     "V-411": [660, 390, 60, 45],
@@ -31,7 +31,7 @@ if 'pagina' not in st.session_state:
 # =========================================================================
 # 2. FUNCIONES SOURCING Y CÁLCULO (MOTOR BIOSTEAM)
 # =========================================================================
-def correr_simulacion(temp_mosto, T_flash, P_flash, 
+def correr_simulacion(t_mosto, t_flash, p_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
     
                           
@@ -46,16 +46,16 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     agua.heat_transfer_price = precio_agua
 
     mosto = bst.Stream("1_Mosto", Water=900, Ethanol=100, units="kg/hr",
-                       T=temp_mosto + 273.15, P=101325)
+                       T=t_mosto + 273.15, P=101325)
     mosto.price = precio_mp
-    vinazas_retorno = bst.Stream("10_Vinazas_Retorno", T=T_flash+273.15, P=3*101325)
+    vinazas_retorno = bst.Stream("10_Vinazas_Retorno", T=t_flash+273.15, P=3*101325)
 
     P110 = bst.Pump("P110", ins=mosto, P=4*101325, outs=("2_Mosto_Presión"))
     W210 = bst.HXprocess("W210", ins=(P110-0, vinazas_retorno), outs=("4_Mosto_Pre", "3_Drenaje"), phase0="l", phase1="l")
     #W210.outs[0].T = 85 + 273.15
-    W310 = bst.HXutility("W310", ins=W210-0, outs="5_Líquido_Caliente", T=T_flash+273.15)
-    V411 = bst.IsenthalpicValve("V411", ins=W310-0, outs="6_Mezcla_Flash", P=P_flash*101325)
-    K410 = bst.Flash("K410", ins=V411-0, outs=("7_Vapor", "8_Vinazas"), P=P_flash*101325, Q=0)
+    W310 = bst.HXutility("W310", ins=W210-0, outs="5_Líquido_Caliente", T=t_flash+273.15)
+    V411 = bst.IsenthalpicValve("V411", ins=W310-0, outs="6_Mezcla_Flash", P=p_flash*101325)
+    K410 = bst.Flash("K410", ins=V411-0, outs=("7_Vapor", "8_Vinazas"), P=p_flash*101325, Q=0)
     W510 = bst.HXutility("W510", ins=K410-0, outs="9_Producto_Final", T=25+273.15)
     
     producto = W510.outs[0]
