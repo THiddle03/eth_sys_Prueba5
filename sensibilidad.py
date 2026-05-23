@@ -3,103 +3,138 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-
-# En sensibilidad.py
-
-# Modifica la primera línea para recibir las variables:
-    def mostrar_sensibilidad(eth_sys, mosto, W310, K410):
-
-
-    st.title("📊 Análisis de Sensibilidad Avanzado")
+def mostrar_sensibilidad(correr_simulacion_func, params_base):
+    st.title("📊 Análisis de Sensibilidad del Proceso")
     
-    # Botón para regresar
-    if st.button("⬅️ Volver a la Simulación"):
+    # Botón para regresar de forma segura
+    if st.button("⬅️ Volver al Panel de Simulación"):
         st.session_state['pagina'] = 'simulacion'
         st.rerun()
         
-    st.write("Haz clic en el botón de abajo para calcular los escenarios dinámicos.")
-    
-    if st.button("Calcular Curvas de Sensibilidad", type="primary"):
-        with st.spinner("🤖 Ejecutando simulaciones iterativas en BioSTEAM..."):
+    # Verificar que existan parámetros base, de lo contrario asignar por defecto
+    if not params_base:
+        st.warning("No se detectaron parámetros base de la simulación. Se usarán valores estándar.")
+        params_base = {
+            't_mosto': 50, 't_flash': 90, 'p_flash': 1.0,
+            'p_elec': 0.085, 'p_vapor': 0.025, 'p_agua_c': 0.0005,
+            'p_mp': 0.05, 'p_etanol': 1.2
+        }
 
-            # ----------------------------------------------------
-            # GRÁFICA 1: T_mosto vs Consumo de Energía (HXutility)
-            # ----------------------------------------------------
-            st.subheader("1. Sensibilidad de la Temperatura del Mosto")
+    st.markdown("### Generación de Escenarios Dinámicos")
+    st.write("El sistema ejecutará iteraciones en BioSTEAM manteniendo los parámetros económicos y operativos de tus sliders constantes, modificando únicamente las variables de interés.")
+
+    if st.button("Ejecutar Análisis de Sensibilidad", type="primary", use_container_width=True):
+        with st.spinner("Corriendo simulaciones iterativas en BioSTEAM... Por favor espera."):
             
-            t_mosto_rango = np.linspace(30, 90, 10)  # Rango de 30°C a 90°C
-            energia_hx = []
-            
-            # Nota técnica: BioSTEAM usualmente trabaja en Kelvin (K) y Pascales (Pa) o bar.
-            # Asegúrate de usar las unidades correctas de tu simulación.
-            t_flash_fija = 110 + 273.15   # 110°C convertidos a Kelvin
-            p_flash_fija = 1.01325        # 1 atm convertida a bar (o usa 101325 si es en Pa)
+            # =========================================================================
+            # GRÁFICA 1: T_mosto vs Consumo de Energía (Fijo: t_flash=110°C, p_flash=1 atm)
+            # =========================================================================
+            t_mosto_rango = np.linspace(30, 90, 8) # 8 puntos entre 30 y 90 °C
+            datos_g1 = []
             
             for t in t_mosto_rango:
-                # A. Fijamos la temperatura variable del mosto en la corriente de entrada
-                mosto.T = t + 273.15  # Convertimos el paso actual a Kelvin
-                
-                # B. ESCENARIO FIJO: Forzamos las condiciones fijas en el separador K410
-                W310.T = t_flash_fija
-                K410.P = p_flash_fija
-                
-                # C. Corremos los balances de materia y energía con la nueva configuración
-                eth_sys.simulate()
-                
-                # D. Recolectamos el consumo energético de los intercambiadores (HXutility)
-                # Sumamos la carga térmica absoluta (|Q|) en kW de todas las utilidades de calor/frío
-                q_total_kw = sum(abs(u.duty) for u in eth_sys.units if hasattr(u, 'duty')) / 3600
-                energia_hx.append(q_total_kw)
+                dm, de, ec, pf, advs, err = correr_simulacion_func(
+                    t_mosto=t, 
+                    t_flash=110.0, # Condición fija solicitada
+                    p_flash=1.0,   # Condición fija solicitada
+                    precio_elec=params_base['p_elec'],
+                    precio_vapor=params_base['p_vapor'],
+                    precio_agua=params_base['p_agua_c'],
+                    precio_mp=params_base['p_mp'],
+                    precio_etanol=params_base['p_etanol']
+                )
+                if not err and de is not None:
+                    # Sumamos el calor absoluto consumido/removido reportado en tu df 'de'
+                    total_calor = de['Calor (kW)'].abs().sum()
+                    datos_g1.append({"T_mosto": t, "Energia_Total_kW": total_calor})
             
-            # Creamos el DataFrame y la gráfica con Plotly
-            df1 = pd.DataFrame({
-                "Temperatura Mosto (°C)": t_mosto_rango, 
-                "Consumo Energético Total (kW)": energia_hx
-            })
+            df_g1 = pd.DataFrame(datos_g1)
             
-            fig1 = px.line(
-                df1, 
-                x="Temperatura Mosto (°C)", 
-                y="Consumo Energético Total (kW)",
-                markers=True,
-                title="Impacto de T_mosto en Consumo Energético (Fijo: Flash a 110°C y 1 atm)"
-            )
-            
-            # Estilizado de la gráfica
-            fig1.update_traces(line_color="#FF4B4B") # Color rojo Streamlit
-            st.plotly_chart(fig1, use_container_width=True)
-            
-            # ----------------------------------------------------
-            # GRÁFICA 2: P_K410 vs % Etanol en '9_Producto_Final'
-            # ----------------------------------------------------
-            p_flash_rango = np.linspace(0.1, 5.0, 10) # de 0.1 a 2 atm
-            concen_etanol = []
+            # =========================================================================
+            # GRÁFICA 2: Presión Separador vs % Etanol en '9_Producto_Final'
+            # =========================================================================
+            p_flash_rango = np.linspace(0.2, 5.0, 8) # 8 puntos de presión de 0.2 a 5 atm
+            datos_g2 = []
             
             for p in p_flash_rango:
-                # K410.P = p
-                # sistema.simulate()
-                # %_etanol = corriente_9.imass['Ethanol'] / corriente_9.F_mass * 100
-                concen_etanol.append(100 - (p * 15)) # Reemplaza con tu variable real
-                
-            df2 = pd.DataFrame({"Presion_atm": p_flash_rango, "Concentracion": concen_etanol})
-            fig2 = px.line(df2, x="Presion_atm", y="Concentracion", title="Presión de Flash vs Pureza de Etanol")
+                dm, de, ec, pf, advs, err = correr_simulacion_func(
+                    t_mosto=params_base['t_mosto'],
+                    t_flash=params_base['t_flash'],
+                    p_flash=p,
+                    precio_elec=params_base['p_elec'],
+                    precio_vapor=params_base['p_vapor'],
+                    precio_agua=params_base['p_agua_c'],
+                    precio_mp=params_base['p_mp'],
+                    precio_etanol=params_base['p_etanol']
+                )
+                if not err and dm is not None:
+                    # Buscamos la corriente '9_Producto_Final' en tu df 'dm'
+                    row = dm[dm['Corriente'] == '9_Producto_Final']
+                    if not row.empty:
+                        # Tu df guarda el % como string (ej: "85.2%"), lo convertimos a flotante
+                        pct_str = row['% Etanol'].values[0].replace('%', '')
+                        datos_g2.append({"Presion_atm": p, "Pureza_Etanol": float(pct_str)})
             
-            # ----------------------------------------------------
+            df_g2 = pd.DataFrame(datos_g2)
+            
+            # =========================================================================
             # GRÁFICA 3: Precio de Venta vs ROI
-            # ----------------------------------------------------
-            precio_rango = np.linspace(0.5, 2.5, 10) # de 0.5 a 2.5 USD/kg
-            roi_valores = []
+            # =========================================================================
+            precio_rango = np.linspace(0.5, 5.0, 8) # Rango comercial de precios de venta
+            datos_g3 = []
             
-            for precio in precio_rango:
-                # producto_final.price = precio
-                # sistema.simulate()
-                # roi = tea.ROI * 100 (BioSTEAM devuelve el ROI en fracción decimal)
-                roi_valores.append((precio * 20) - 15) # Reemplaza con tu variable real
-                
-            df3 = pd.DataFrame({"Precio_USD": precio_rango, "ROI": roi_valores})
-            fig3 = px.line(df3, x="Precio_USD", y="ROI", title="Precio de Venta Sugerido vs Retorno de Inversión (ROI)")
+            for pr in precio_rango:
+                dm, de, ec, pf, advs, err = correr_simulacion_func(
+                    t_mosto=params_base['t_mosto'],
+                    t_flash=params_base['t_flash'],
+                    p_flash=params_base['p_flash'],
+                    precio_elec=params_base['p_elec'],
+                    precio_vapor=params_base['p_vapor'],
+                    precio_agua=params_base['p_agua_c'],
+                    precio_mp=params_base['p_mp'],
+                    precio_etanol=pr
+                )
+                if not err and ec is not None:
+                    # Tu diccionario 'ec' ya guarda el ROI (%) calculado directamente
+                    datos_g3.append({"Precio_Venta": pr, "ROI": ec.get("ROI (%)", 0)})
+                    
+            df_g3 = pd.DataFrame(datos_g3)
+
+            # =========================================================================
+            # DESPLIEGUE DE GRÁFICAS EN INTERFAZ
+            # =========================================================================
+            st.success("¡Análisis completado exitosamente!")
             
-            # --- Desplegar las gráficas en Streamlit ---
-            st.plotly_chart(fig1, use_container_width=True)
-            st.plotly_chart(fig2, use_container_width=True)
-            st.plotly_chart(fig3, use_container_width=True)
+            # Gráfica 1
+            if not df_g1.empty:
+                fig1 = px.line(df_g1, x="T_mosto", y="Energia_Total_kW", markers=True,
+                               labels={"T_mosto": "Temperatura de Alimentación Mosto (°C)", "Energia_Total_kW": "Consumo Energético Total (kW)"},
+                               title="1. Impacto de T_mosto en Consumo Energético (Fijo: Flash a 110°C y 1 atm)")
+                fig1.update_traces(line_color="#FF4B4B")
+                st.plotly_chart(fig1, use_container_width=True)
+            else:
+                st.error("No se pudieron generar datos para la Gráfica 1 debido a errores de convergencia.")
+
+            st.divider()
+
+            # Gráfica 2
+            if not df_g2.empty:
+                fig2 = px.line(df_g2, x="Presion_atm", y="Pureza_Etanol", markers=True,
+                               labels={"Presion_atm": "Presión del Separador K410 (atm)", "Pureza_Etanol": "Concentración de Etanol (%)"},
+                               title="2. Presión del Separador K410 vs. Pureza del Producto Final")
+                fig2.update_traces(line_color="#00CC96")
+                st.plotly_chart(fig2, use_container_width=True)
+            else:
+                st.error("No se pudieron generar datos para la Gráfica 2. Valida las condiciones del Flash.")
+
+            st.divider()
+
+            # Gráfica 3
+            if not df_g3.empty:
+                fig3 = px.line(df_g3, x="Precio_Venta", y="ROI", markers=True,
+                               labels={"Precio_Venta": "Precio de Venta Sugerido ($/kg)", "ROI": "Retorno de Inversión - ROI (%)"},
+                               title="3. Viabilidad Financiera: Precio de Venta vs. Retorno de Inversión (ROI)")
+                fig3.update_traces(line_color="#AB63FA")
+                st.plotly_chart(fig3, use_container_width=True)
+            else:
+                st.error("No se pudieron generar datos para la Gráfica 3. Revisa la configuración del TEA.")
