@@ -253,6 +253,12 @@ def mostrar_simulacion():
         st.rerun()
 
     if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
+        # Guardamos una copia de los sliders actuales como valores base
+        st.session_state['params_base'] = {
+            't_mosto': t_mosto, 't_flash': t_flash, 'p_flash': p_flash,
+            'p_elec': p_elec, 'p_vapor': p_vapor, 'p_agua_c': p_agua_c,
+            'p_mp': p_mp, 'p_etanol': p_etanol
+              }
         st.session_state['pagina'] = 'sensibilidad'
         st.rerun()
 
@@ -404,10 +410,7 @@ if st.session_state['pagina'] == 'inicio':
     mostrar_inicio()
 elif st.session_state['pagina'] == 'simulacion':
     mostrar_simulacion()    
-# En app.py (al final del archivo, en tu enrutador de páginas) 
 elif st.session_state['pagina'] == 'sensibilidad':
     from sensibilidad import mostrar_sensibilidad
-    # ¡Aquí pasas los objetos reales que creaste en tu simulación!
-    # Nota: Asegúrate de que 'eth_sys', 'mosto' y 'K410' estén definidos de forma global 
-    # en tu app.py o impórtalos desde donde construyas tu sistema BioSTEAM.
-#mostrar_sensibilidad(eth_sys, mosto, W310, K410)
+    # Pasamos la función como un objeto y los parámetros de los sliders
+    mostrar_sensibilidad(correr_simulacion, st.session_state.get('params_base', {}))
