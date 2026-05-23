@@ -6,3 +6,4 @@ pandas
 google-generativeai
 Pillow
 graphviz
+plotly
