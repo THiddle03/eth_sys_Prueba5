@@ -235,8 +235,6 @@ def mostrar_simulacion():
     
     # CONFIGURACIÓN DE LA BARRA LATERAL
     st.sidebar.header("🌡️ Parámetros Proceso")
-    #f_w = st.sidebar.slider("Agua (kg/h)", 100, 3000, 900)
-    #f_e = st.sidebar.slider("Etanol (kg/h)", 50, 2000, 100)
     t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 95, 50)
     t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 25, 130, 90)
     p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 10.0, 1.0, step=0.1)
