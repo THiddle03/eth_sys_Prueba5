@@ -3,10 +3,11 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-# En sensibilidad.py
 
-# Modifica la primera línea para recibir las variables:
-mostrar_sensibilidad(eth_sys, mosto, W310, K410):
+
+
+from app import mostrar_sensibilidad
+
     st.title("📊 Análisis de Sensibilidad Avanzado")
     
     # Botón para regresar
