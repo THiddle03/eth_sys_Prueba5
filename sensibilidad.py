@@ -6,7 +6,7 @@ import numpy as np
 # En sensibilidad.py
 
 # Modifica la primera línea para recibir las variables:
-def mostrar_sensibilidad(eth_sys, mosto, W310, K410):
+def mostrar_sensibilidad(planta_etanol, mosto, W310, K410):
     st.title("📊 Análisis de Sensibilidad Avanzado")
     
     # Botón para regresar
