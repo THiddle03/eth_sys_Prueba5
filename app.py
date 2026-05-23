@@ -237,9 +237,9 @@ def mostrar_simulacion():
     st.sidebar.header("🌡️ Parámetros Proceso")
     #f_w = st.sidebar.slider("Agua (kg/h)", 100, 3000, 900)
     #f_e = st.sidebar.slider("Etanol (kg/h)", 50, 2000, 100)
-    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 10, 50, 25)
-    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 70, 500, 92)
-    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 15.0, 1.0, step=0.1)
+    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 95, 50)
+    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 25, 130, 90)
+    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 10.0, 1.0, step=0.1)
 
     st.sidebar.divider()
     st.sidebar.header("💰 Parámetros Económicos")
@@ -250,8 +250,7 @@ def mostrar_simulacion():
     p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
 
     if st.sidebar.button("Simular Proceso", type="primary"):
-        dm, de, ec, pf, adv, err = correr_simulacion(t_mosto, t_flash, p_flash, 
-                                                     p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
+        dm, de, ec, pf, adv, err = correr_simulacion(t_mosto, t_flash, p_flash, p_elec, p_vapor, p_agua_c, p_mp, p_etanol)
         if err:
             st.error(err)
         else:
