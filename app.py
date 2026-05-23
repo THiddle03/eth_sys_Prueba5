@@ -111,9 +111,19 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
                       startup_salesfrac=0.5, finance_interest=0, finance_years=0, finance_fraction=0)
     tea.IRR = 0.0
     # CONTROL DE SEGURIDAD: Validar si la corriente tiene masa
+# =========================================================================
+# 4. ADVERTENCIAS (Temperatura de entraday temperatura W-310)
+# =========================================================================
+                          
+    advertencias = []
+    if mosto.phase != 'l' or mosto.V > 0.01:
+        advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
+
+    return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
+    
     if producto.F_mass == 0:
     # Devolvemos un mensaje amigable en el último elemento (err)
-       return None, None, None, None, None, "Error: El flujo de etanol es 0 kg/h. Revisa que las temperaturas y presiones de los sliders permitan la separación del etanol."
+       advertencias.append(f"⚠️ **Alerta Producto Final:** El flujo de etanol es 0 kg/h. Revisa que las temperaturas y presiones de los sliders permitan la separación del etanol.")
 
     # Si tiene masa, procedemos normalmente
     costo_p = tea.solve_price(producto)
@@ -126,15 +136,6 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     except:
         p_path = None
 
-# =========================================================================
-# 4. ADVERTENCIAS (Temperatura de entrada)
-# =========================================================================
-                          
-    advertencias = []
-    if mosto.phase != 'l' or mosto.V > 0.05:
-        advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
-
-    return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
 
 # =========================================================================
 # 5. PFD INTERACTIVO (Resultados en imagen SVG)
