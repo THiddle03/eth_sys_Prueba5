@@ -249,8 +249,8 @@ def mostrar_simulacion():
     p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
 
     if st.sidebar.button("Simular Proceso", type="primary"):
-        # Ahora hay una correspondencia 1 a 1 exacta de 8 variables
-        dm, de, ec, pf, err = correr_simulacion(
+        # 1. Recibimos los 6 elementos que devuelve la función (añadimos 'advs')
+        dm, de, ec, pf, advs, err = correr_simulacion(
             t_mosto, 
             t_flash, 
             p_flash, 
@@ -264,7 +264,9 @@ def mostrar_simulacion():
         if err:
             st.error(err)
         else:
-            st.session_state['resultados'] = (dm, de, ec, pf)
+            # 2. Guardamos las 5 variables necesarias en la sesión (añadimos 'advs')
+            st.session_state['resultados'] = (dm, de, ec, pf, advs)
+            st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
 # =========================================================================
 # 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
 # =========================================================================
@@ -305,7 +307,7 @@ def mostrar_simulacion():
                             Eres un experto en ingeniería química.
                             Resultados: {dm.to_string()}
                             Economía: {ec}
-                            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
+                            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$, Etanol={p_etanol}$.
                             Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
                             Responde en <250 palabras de forma didáctica.
                             """
