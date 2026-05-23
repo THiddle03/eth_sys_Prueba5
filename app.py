@@ -115,7 +115,7 @@ def correr_simulacion(temp_mosto, T_flash, P_flash,
     # CONTROL DE SEGURIDAD: Validar si la corriente tiene masa
     if producto.F_mass == 0:
     # Devolvemos un mensaje amigable en el último elemento (err)
-    return None, None, None, None, None, "Error: El flujo de etanol es 0 kg/h. Revisa que las temperaturas y presiones de los sliders permitan la separación del etanol."
+       return None, None, None, None, None, "Error: El flujo de etanol es 0 kg/h. Revisa que las temperaturas y presiones de los sliders permitan la separación del etanol."
 
     # Si tiene masa, procedemos normalmente
     costo_p = tea.solve_price(producto)
