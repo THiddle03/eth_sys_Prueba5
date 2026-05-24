@@ -329,12 +329,12 @@ def mostrar_simulacion():
 # =========================================================================
 # 9. TUTOR IA Interactivo (Gemini)
 # =========================================================================
-        st.divider()
-        st.subheader("🤖 Tutor IA Interactivo")
-        api_key = st.secrets.get("GEMINI_API_KEY")
+            #st.divider()
+            st.subheader("🤖 Tutor IA Interactivo")
+            api_key = st.secrets.get("GEMINI_API_KEY")
             
-        if api_key:
-             user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
+            if api_key:
+                user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
                 if st.button("Enviar al Tutor"):
                     if user_question:
                         with st.spinner('Analizando...'):
@@ -360,7 +360,6 @@ def mostrar_simulacion():
                 st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
 
         if pf and os.path.exists(pf):
-
 
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
