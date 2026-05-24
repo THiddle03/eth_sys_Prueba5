@@ -262,10 +262,10 @@ def mostrar_simulacion():
 
     st.sidebar.divider()
     st.sidebar.header("💰 Parámetros Económicos")
-    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.0, 10, 5, step=0.5)
-    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.0, 10, 5, step=0.2)
-    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 1, 15,5, step=1.0)
-    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.0, 5, 2, step=0.2)
+    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.1, 10.0, 5.0, step=0.5)
+    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.1, 10, 5, step=0.2)
+    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 1, 15, 5, step=1.0)
+    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.1, 5, 2, step=0.2)
     p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.1, 5, 2, step=0.1)
 
     if st.sidebar.button("Simular Proceso", type="primary"):
