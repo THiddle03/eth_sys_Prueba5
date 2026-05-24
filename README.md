@@ -15,7 +15,8 @@
 #Como su nombre lo indica es el corazón de la aplicación.
 #Esta compuesta por 11 secciones, las cuales se encuentran identificadas y numeradas.
 #Primero se importan las librerias necesarias para correr la aplicación.
-#La PRIMER SECCIÓN identifica la página de introducción como "inicio". Tambien define las coordenadas de la imagen SVG.
+#La PRIMER SECCIÓN identifica la página de introducción como "inicio". Tambien define las coordenadas de la imagen SVG, esta imagen 
+#se sube al repositorio en la rama principal.
 
 #La SEGUNDA SECCIÓN plantea la simulación del proceso en BioSTEAM, es decir, identifica las corrientes con nombres y números, define
 #los valores de las corrientes como puede ser masa, presión y temperatura, conecta las corrientes a los equipos, define la secuencia  
@@ -69,7 +70,8 @@
 #=============================================================================================
 #Es la página que aparece al oprimir "🗺️ Ver Diagramas de Ingeniería", se presentan los tres diagramas del proceso: uno de bloques,
 #uno de flujo de proceso y por último el de tubería e instrumentación. Además de visualizarse, se tiene la posibilidad de descargar
-#los archivos, los cuales se realizaron en AutoCAD Plant 3D.
+#los archivos en formato PDF, los cuales se realizaron en AutoCAD Plant 3D. Los tres archivos PDF deben de subirse al repositorio
+#en la rama principal para que se logre la descarga y visualización.
 
 #Gracias por su atención.
 
