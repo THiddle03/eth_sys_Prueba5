@@ -360,15 +360,15 @@ def generar_pfd_interactivo(datos_simulacion):
     """
 
     row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
-        if not row_p_final.empty:
-            p_bar = row_p_final['Presión (bar)'].values[0]
-            p_atm = round(p_bar / 1.01325, 3)
-            t_c = row_p_final['Temp (°C)'].values[0]
-            f_mass = row_p_final['Flujo (kg/h)'].values[0]
-            pct_eth = row_p_final['% Etanol'].values[0]
-            pct_agua = row_p_final['% Agua'].values[0]
-        else:
-            t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
+    if not row_p_final.empty:
+        p_bar = row_p_final['Presión (bar)'].values[0]
+        p_atm = round(p_bar / 1.01325, 3)
+        t_c = row_p_final['Temp (°C)'].values[0]
+        f_mass = row_p_final['Flujo (kg/h)'].values[0]
+        pct_eth = row_p_final['% Etanol'].values[0]
+        pct_agua = row_p_final['% Agua'].values[0]
+    else:
+        t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
 
         datos_actualizados = {
             "P110": {"Potencia": f"{de[de['Equipo']=='P110']['Potencia (kW)'].values[0] if 'P110' in de['Equipo'].values else '0.0'} kW"},
