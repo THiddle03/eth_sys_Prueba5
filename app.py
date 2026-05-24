@@ -366,7 +366,7 @@ def generar_pfd_interactivo(datos_simulacion):
         }
 
         st.divider()
-        st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
+        st.subheader("🧪 Diagrama de Proceso: Monitoreo en Tiempo Real")
         
         html_interactivo = generar_pfd_interactivo(datos_actualizados)
         
