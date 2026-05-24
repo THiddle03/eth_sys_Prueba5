@@ -288,6 +288,8 @@ def mostrar_simulacion():
             st.session_state['resultados'] = (dm, de, ec, pf, advs)
             st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
 
+    col_nav1, col_nav2 = st.columns(2)
+    with col_nav1:
     if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
         # Guardamos una copia de los sliders actuales como valores base
         st.session_state['params_base'] = {
@@ -296,7 +298,11 @@ def mostrar_simulacion():
             'p_mp': p_mp, 'p_etanol': p_etanol
               }
         st.session_state['pagina'] = 'sensibilidad'
-        st.rerun()
+        st.rerun()            
+    with col_nav2:
+        if st.button("🗺️ Ver Diagramas de Ingeniería", type="secondary", use_container_width=True):
+            st.session_state['pagina'] = 'diagramas'
+            st.rerun()
 
 # =========================================================================
 # 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
@@ -416,3 +422,6 @@ elif st.session_state['pagina'] == 'sensibilidad':
     from sensibilidad import mostrar_sensibilidad
     # Pasamos la función como un objeto y los parámetros de los sliders
     mostrar_sensibilidad(correr_simulacion, st.session_state.get('params_base', {}))
+elif st.session_state['pagina'] == 'diagramas':
+    from diagramas import mostrar_diagramas
+    mostrar_diagramas() # Llamamos a la nueva pantalla
