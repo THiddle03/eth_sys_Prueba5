@@ -16,8 +16,8 @@ def mostrar_sensibilidad(correr_simulacion_func, params_base):
         st.warning("No se detectaron parámetros base de la simulación. Se usarán valores estándar.")
         params_base = {
             't_mosto': 50, 't_flash': 130, 'p_flash': 1.0,
-            'p_elec': 0.085, 'p_vapor': 0.025, 'p_agua_c': 0.0005,
-            'p_mp': 0.05, 'p_etanol': 1.2
+            'p_elec': 0.5, 'p_vapor': 1.0, 'p_agua_c': 0.2,
+            'p_mp': 0.2, 'p_etanol': 1.2
         }
 
     st.markdown("### Generación de Escenarios Dinámicos")
