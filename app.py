@@ -341,7 +341,7 @@ def mostrar_simulacion():
                         genai.configure(api_key=api_key)
                         model = genai.GenerativeModel('gemini-2.5-pro')
                         contexto = f"""
-                        Eres un experto en ingeniería química.
+                        Actúa como un tutor experto en simulación de procesos, balances de materia y energía, diseño de plantas y análisis económico. Explica los resultados de forma clara para estudiantes de ingeniería química. Utiliza únicamente los valores calculados o mostrados por la aplicación. No inventes datos. Si falta información, indícalo de forma explícita y sugiere qué dato sería necesario para mejorar el análisis.
                         Resultados: {dm.to_string()}
                         Economía: {ec}
                         Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
