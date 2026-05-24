@@ -329,37 +329,36 @@ def mostrar_simulacion():
 # =========================================================================
 # 9. TUTOR IA Interactivo (Gemini)
 # =========================================================================
-            #st.divider()
-            st.subheader("🤖 Tutor IA Interactivo")
-            api_key = st.secrets.get("GEMINI_API_KEY")
-            
-            if api_key:
-                user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
-                if st.button("Enviar al Tutor"):
-                    if user_question:
-                        with st.spinner('Analizando...'):
-                            genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel('gemini-2.5-pro')
-                            contexto = f"""
-                            Eres un experto en ingeniería química.
-                            Resultados: {dm.to_string()}
-                            Economía: {ec}
-                            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
-                            Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
-                            Responde en <250 palabras de forma didáctica.
-                            """
-                            full_prompt = f"{contexto}\n\nPregunta: {user_question}"
-                            try:
-                                response = model.generate_content(full_prompt)
-                                st.info(response.text)
-                            except Exception as e:
-                                st.error(f"Error: {e}")
-                    else:
-                        st.warning("Escribe una pregunta.")
-            else:
+st.divider()
+st.subheader("🤖 Tutor IA Interactivo")
+api_key = st.secrets.get("GEMINI_API_KEY")
+       
+if api_key:
+user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
+if st.button("Enviar al Tutor"):
+    if user_question:
+        with st.spinner('Analizando...'):
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-pro')
+            contexto = f"""
+            Eres un experto en ingeniería química.
+            Resultados: {dm.to_string()}
+            Economía: {ec}
+            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
+            Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
+            Responde en <250 palabras de forma didáctica.
+            """
+            full_prompt = f"{contexto}\n\nPregunta: {user_question}"
+            try:
+                response = model.generate_content(full_prompt)
+                st.info(response.text)
+           except Exception as e:
+                st.error(f"Error: {e}")
+           else:
+                st.warning("Escribe una pregunta.")
+           else:
                 st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
-
-        if pf and os.path.exists(pf):
+if pf and os.path.exists(pf):
 
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
