@@ -102,8 +102,7 @@ def mostrar_simulacion():
 # =========================================================================
 def correr_simulacion(t_mosto, t_flash, p_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
-    
-                          
+     
     bst.main_flowsheet.clear()
     chemicals = tmo.Chemicals(["Water", "Ethanol"])
     bst.settings.set_thermo(chemicals)
@@ -164,7 +163,6 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 # =========================================================================
 # 3. TEA Robusto (Simulador económico)
 # =========================================================================
-                          
     class TEA_Robusto(bst.TEA):
         def _DPI(self, installed_equipment_cost): return self.purchase_cost
         def _TDC(self, DPI): return DPI
@@ -211,7 +209,6 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 # =========================================================================
 # 4. ADVERTENCIAS (Temperatura de entraday temperatura W-310)
 # =========================================================================
-                          
     advertencias = []
     if mosto.phase != 'l' or mosto.V > 0.01:
         advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
@@ -232,7 +229,7 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
             'p_mp': p_mp, 'p_etanol': p_etanol
               }
             st.session_state['pagina'] = 'sensibilidad'
-            st.rerun()            
+            st.rerun()    
     with col_nav2:
         if st.button("🗺️ Ver Diagramas de Ingeniería", type="secondary", use_container_width=True):
             st.session_state['pagina'] = 'diagramas'
@@ -340,11 +337,11 @@ def generar_pfd_interactivo(datos_simulacion):
 
     return f"""
     <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
-        <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
+    <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
              color: #00ffcc; padding: 12px; border-radius: 8px; font-family: 'Segoe UI', Tahoma; 
              font-size: 13px; z-index: 10000; pointer-events: none; border: 1px solid #00ffcc;
              box-shadow: 0px 0px 15px rgba(0,255,204,0.3);"></div>
-        {svg_content.replace('</svg>', capa_interactiva + '</svg>')}
+    {svg_content.replace('</svg>', capa_interactiva + '</svg>')}
     </div>
     <script>
         const tipBox = document.getElementById('tooltip-box');
@@ -362,7 +359,7 @@ def generar_pfd_interactivo(datos_simulacion):
     </script>
     """
 
-        row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
+    row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
         if not row_p_final.empty:
             p_bar = row_p_final['Presión (bar)'].values[0]
             p_atm = round(p_bar / 1.01325, 3)
@@ -394,7 +391,7 @@ def generar_pfd_interactivo(datos_simulacion):
         }
 
         st.divider()
-        st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
+        st.subheader("🧪 Diagrama de Proceso: Monitoreo en Tiempo Real")
         
         html_interactivo = generar_pfd_interactivo(datos_actualizados)
         
