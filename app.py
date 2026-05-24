@@ -8,6 +8,12 @@ import uuid
 import streamlit.components.v1 as components
 import numpy as np
 
+st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
+
+# Inicializar el control de navegación si no existe
+if 'pagina' not in st.session_state:
+    st.session_state['pagina'] = 'inicio'
+
 # =========================================================================
 # 1. PÁGINA DE INICIO (LANDING PAGE)
 # =========================================================================
@@ -242,11 +248,7 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 # =========================================================================
 # 2. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
 # =========================================================================
-st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
-# Inicializar el control de navegación si no existe
-if 'pagina' not in st.session_state:
-    st.session_state['pagina'] = 'inicio'
 
 def mostrar_simulacion():
     # Botón discreto en la barra lateral para volver a la Home
