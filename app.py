@@ -334,41 +334,16 @@ def generar_pfd_interactivo(datos_simulacion):
 # =========================================================================
 # 9. INTEGRACIÓN SVG (mostrar resultados en SVG)
 # =========================================================================
-
-    return f"""
-    <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
-    <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
-             color: #00ffcc; padding: 12px; border-radius: 8px; font-family: 'Segoe UI', Tahoma; 
-             font-size: 13px; z-index: 10000; pointer-events: none; border: 1px solid #00ffcc;
-             box-shadow: 0px 0px 15px rgba(0,255,204,0.3);"></div>
-    {svg_content.replace('</svg>', capa_interactiva + '</svg>')}
-    </div>
-    <script>
-        const tipBox = document.getElementById('tooltip-box');
-        function showTip(e, text) {{
-            tipBox.innerHTML = text;
-            tipBox.style.display = 'block';
-            moverTip(e);
-        }}
-        function hideTip() {{ tipBox.style.display = 'none'; }}
-        function moverTip(e) {{
-            tipBox.style.left = (e.clientX + 20) + 'px';
-            tipBox.style.top = (e.clientY + 20) + 'px';
-        }}
-        document.addEventListener('mousemove', moverTip);
-    </script>
-    """
-
-    row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
-    if not row_p_final.empty:
-        p_bar = row_p_final['Presión (bar)'].values[0]
-        p_atm = round(p_bar / 1.01325, 3)
-        t_c = row_p_final['Temp (°C)'].values[0]
-        f_mass = row_p_final['Flujo (kg/h)'].values[0]
-        pct_eth = row_p_final['% Etanol'].values[0]
-        pct_agua = row_p_final['% Agua'].values[0]
-    else:
-        t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
+        row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
+        if not row_p_final.empty:
+            p_bar = row_p_final['Presión (bar)'].values[0]
+            p_atm = round(p_bar / 1.01325, 3)
+            t_c = row_p_final['Temp (°C)'].values[0]
+            f_mass = row_p_final['Flujo (kg/h)'].values[0]
+            pct_eth = row_p_final['% Etanol'].values[0]
+            pct_agua = row_p_final['% Agua'].values[0]
+        else:
+            t_c, p_atm, f_mass, pct_eth, pct_agua = "N/D", "N/D", "N/D", "N/D", "N/D"
 
         datos_actualizados = {
             "P110": {"Potencia": f"{de[de['Equipo']=='P110']['Potencia (kW)'].values[0] if 'P110' in de['Equipo'].values else '0.0'} kW"},
@@ -391,7 +366,7 @@ def generar_pfd_interactivo(datos_simulacion):
         }
 
         st.divider()
-        st.subheader("🧪 Diagrama de Proceso: Monitoreo en Tiempo Real")
+        st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
         
         html_interactivo = generar_pfd_interactivo(datos_actualizados)
         
