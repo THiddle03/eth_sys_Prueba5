@@ -3,7 +3,7 @@ streamlit>=1.31.0
 biosteam
 thermosteam
 pandas
-ollama
+google.generativeai
 Pillow
 graphviz
 plotly
