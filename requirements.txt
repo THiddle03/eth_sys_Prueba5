@@ -7,5 +7,4 @@ google.generativeai
 Pillow
 graphviz
 plotly
-os
-base64
+
