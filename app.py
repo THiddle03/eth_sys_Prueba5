@@ -321,56 +321,42 @@ def mostrar_simulacion():
             st.dataframe(de, use_container_width=True)
 
 # =========================================================================
-# 9. TUTOR IA Interactivo (Ollama - DeepSeek con Servidor Privado)
+# 9. TUTOR IA Interactivo (Gemini)
 # =========================================================================
-            st.divider()
-            st.subheader("🤖 Tutor IA Interactivo (DeepSeek)")
-            
-            user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
-            
-            if st.button("Enviar al Tutor"):
-                if user_question:
-                    # 1. Validamos primero si la variable existe en tus Secrets de Streamlit
-                    url_servidor = st.secrets.get("OLLAMA_HOST")
-                    
-                    if not url_servidor:
-                        st.error("🚨 **Error de configuración:** No encontré la variable `OLLAMA_HOST` en los Secrets de Streamlit Cloud. Por favor, agrégala en la configuración de la app.")
-                    else:
-                        with st.spinner('Conectando con el servidor DeepSeek...'):
-                            # 2. Importamos el Cliente dedicado de Ollama
-                            from ollama import Client
-            
-                            # 3. Forzamos a Ollama a conectarse a tu URL privada
-                            cliente_privado = Client(host=url_servidor)
-            
-                            contexto = f"""
-                            Actúa como un tutor experto en simulación de procesos, balances de materia y energía, diseño de plantas y análisis económico. Explica los resultados de forma clara para estudiantes de ingeniería química. Utiliza únicamente los valores calculados o mostrados por la aplicación. No inventes datos. Si falta información, indícalo de forma explícita y sugiere qué dato sería necesario para mejorar el análisis.
-                            Resultados: {dm.to_string()}
-                            Economía: {ec}
-                            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$, Etanol={p_etanol}$.
-                            Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
-                            Responde en <250 palabras de forma didáctica.
-                            """
-                            
-                            full_prompt = f"{contexto}\n\nPregunta: {user_question}"
-                            
-                            try:
-                                # 4. Usamos el cliente privado en lugar del chat global por defecto
-                                response = cliente_privado.chat(
-                                    model='deepseek-v4-pro:cloud',
-                                    messages=[{'role': 'user', 'content': full_prompt}],
-                                )
-                                
-                                st.info(response.message.content)
-                                
-                            except Exception as e:
-                                st.error(f"Error crítico al conectar con tu servidor de Ollama ({url_servidor}): {e}")
-                else:
-                    st.warning("Por favor, escribe una pregunta primero.")
-            
-            if pf and os.path.exists(pf):
-                st.divider()
-                st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
+            st.divider()
+            st.subheader("🤖 Tutor IA Interactivo")
+            api_key = st.secrets.get("GEMINI_API_KEY")
+            
+            if api_key:
+                user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
+                if st.button("Enviar al Tutor"):
+                    if user_question:
+                        with st.spinner('Analizando...'):
+                            genai.configure(api_key=api_key)
+                            model = genai.GenerativeModel('gemini-2.5-pro')
+                            contexto = f"""
+                            Eres un experto en ingeniería química.
+                            Resultados: {dm.to_string()}
+                            Economía: {ec}
+                            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
+                            Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
+                            Responde en <250 palabras de forma didáctica.
+                            """
+                            full_prompt = f"{contexto}\n\nPregunta: {user_question}"
+                            try:
+                                response = model.generate_content(full_prompt)
+                                st.info(response.text)
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                    else:
+                        st.warning("Escribe una pregunta.")
+            else:
+                st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
+
+        if pf and os.path.exists(pf):
+            st.divider()
+            st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
+
 
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
