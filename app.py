@@ -397,7 +397,7 @@ def generar_pfd_interactivo(datos_simulacion):
         
         if html_interactivo is None:
             st.error("🚨 **Error de visualización:** El archivo `'D_eth_sys.svg'` no fue localizado en el servidor. Revisa que esté subido en la raíz de GitHub con ese nombre exacto.")
-         else:
+        else:
             st.info("Pase el mouse sobre los equipos o la línea de 9_Producto Final para observar los resultados en vivo")
             components.html(html_interactivo, height=750, scrolling=True)
     else:
