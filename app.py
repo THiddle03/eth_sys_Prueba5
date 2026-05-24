@@ -323,46 +323,46 @@ def mostrar_simulacion():
 # =========================================================================
 # 9. TUTOR IA Interactivo (Ollama - DeepSeek)
 # =========================================================================
-st.divider()
-st.subheader("🤖 Tutor IA Interactivo (DeepSeek)")
-
-user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
-
-if st.button("Enviar al Tutor"):
-    if user_question:
-        with st.spinner('DeepSeek analizando simulación...'):
-            # Importación local de Ollama
-            from olla import chat
-
-            contexto = f"""
-            Actúa como un tutor experto en simulación de procesos, balances de materia y energía, diseño de plantas y análisis económico. Explica los resultados de forma clara para estudiantes de ingeniería química. Utiliza únicamente los valores calculados o mostrados por la aplicación. No inventes datos. Si falta información, indícalo de forma explícita y sugiere qué dato sería necesario para mejorar el análisis.
-            Resultados: {dm.to_string()}
-            Economía: {ec}
-            Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$, Etanol={p_etanol}$.
-            Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
-            Responde en <250 palabras de forma didáctica.
-            """
-            
-            full_prompt = f"{contexto}\n\nPregunta: {user_question}"
-            
-            try:
-                # Llamada oficial usando el SDK de Ollama
-                response = chat(
-                    model='deepseek-v4-pro:cloud',
-                    messages=[{'role': 'user', 'content': full_prompt}],
-                )
-                
-                # Desplegamos la respuesta en la interfaz de Streamlit
-                st.info(response.message.content)
-                
-            except Exception as e:
-                st.error(f"Error al conectar con Ollama: {e}")
-    else:
-        st.warning("Por favor, escribe una pregunta primero.")
-
-if pf and os.path.exists(pf):
-    st.divider()
-    st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
+        st.divider()
+        st.subheader("🤖 Tutor IA Interactivo (DeepSeek)")
+        
+        user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
+        
+        if st.button("Enviar al Tutor"):
+            if user_question:
+                with st.spinner('DeepSeek analizando simulación...'):
+                    # Importación local de Ollama
+                    from ollama import chat
+        
+                    contexto = f"""
+                    Actúa como un tutor experto en simulación de procesos, balances de materia y energía, diseño de plantas y análisis económico. Explica los resultados de forma clara para estudiantes de ingeniería química. Utiliza únicamente los valores calculados o mostrados por la aplicación. No inventes datos. Si falta información, indícalo de forma explícita y sugiere qué dato sería necesario para mejorar el análisis.
+                    Resultados: {dm.to_string()}
+                    Economía: {ec}
+                    Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$, Etanol={p_etanol}$.
+                    Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
+                    Responde en <250 palabras de forma didáctica.
+                    """
+                    
+                    full_prompt = f"{contexto}\n\nPregunta: {user_question}"
+                    
+                    try:
+                        # Llamada oficial usando el SDK de Ollama
+                        response = chat(
+                            model='deepseek-v4-pro:cloud',
+                            messages=[{'role': 'user', 'content': full_prompt}],
+                        )
+                        
+                        # Desplegamos la respuesta en la interfaz de Streamlit
+                        st.info(response.message.content)
+                        
+                    except Exception as e:
+                        st.error(f"Error al conectar con Ollama: {e}")
+            else:
+                st.warning("Por favor, escribe una pregunta primero.")
+        
+        if pf and os.path.exists(pf):
+            st.divider()
+            st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
 
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
