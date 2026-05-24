@@ -364,7 +364,7 @@ def mostrar_simulacion():
 # =========================================================================
         row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
         if not row_p_final.empty:
-            p_bar = row_p_final['Presión (bar)'].values[0]
+            p_bar = row_p_final['Presión (atm)'].values[0]
             p_atm = round(p_bar / 1.01325, 3)
             t_c = row_p_final['Temp (°C)'].values[0]
             f_mass = row_p_final['Flujo (kg/h)'].values[0]
