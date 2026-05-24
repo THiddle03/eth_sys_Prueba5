@@ -329,7 +329,7 @@ def mostrar_simulacion():
 # =========================================================================
 # 9. TUTOR IA Interactivo (Gemini)
 # =========================================================================
-st.divider()
+        st.divider()
         st.subheader("🤖 Tutor IA Interactivo")
         api_key = st.secrets.get("GEMINI_API_KEY")
         
