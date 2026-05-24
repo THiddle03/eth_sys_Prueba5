@@ -1,10 +1,10 @@
-altair>=5.0.0
-streamlit>=1.31.0
-biosteam
-thermosteam
-pandas
-google.generativeai
-Pillow
-graphviz
-plotly
+altair>=5.0.0 #Para gráficas
+streamlit>=1.31.0 #Donde se deplegará la aplicación
+biosteam #Librería para simular el proceso de la planta
+thermosteam #Librería de propiedades termodinámicas
+pandas #Manipulación y análisis de datos
+google.generativeai #IA Gemini
+Pillow #Manejo de imágenes
+graphviz #Manejo SVG
+plotly #Para gráficas
 
