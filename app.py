@@ -76,7 +76,7 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
             datos_mat.append({
                 "Corriente": s.ID,
                 "Temp (°C)": round(s.T - 273.15, 2),
-                "Presión (bar)": round(s.P / 100000, 3),
+                "Presión (atm)": round(s.P / (101325), 3),
                 "Flujo (kg/h)": round(s.F_mass, 2),
                 "% Etanol": f"{(s.imass['Ethanol']/s.F_mass if s.F_mass > 0 else 0):.1%}",
                 "% Agua": f"{(s.imass['Water']/s.F_mass if s.F_mass > 0 else 0):.1%}"
