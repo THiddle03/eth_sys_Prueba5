@@ -7,58 +7,35 @@ import os
 import uuid
 import streamlit.components.v1 as components
 import numpy as np
-import graphviz
 
+# =========================================================================
+# 1. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
+# =========================================================================
 st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
+
+# Mapeo de coordenadas para el archivo D_eth_sys.svg
+ZONAS_EQUIPOS = {
+    "P-110": [170, 55, 55, 55],
+    "W-210": [375, 95, 95, 75],
+    "W-310": [510, 290, 80, 70],
+    "V-411": [660, 390, 60, 45],
+    "K-410": [855, 320, 95, 180],
+    "W-510": [975, 490, 80, 90],
+    "P-510": [1040, 675, 60, 45],
+    "Producto Final": [970, 725, 180, 100]
+}
 
 # Inicializar el control de navegación si no existe
 if 'pagina' not in st.session_state:
     st.session_state['pagina'] = 'inicio'
 
 # =========================================================================
-# 1. PÁGINA DE INICIO (LANDING PAGE)
-# =========================================================================
-def mostrar_inicio():
-    st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
-    st.subheader("Plataforma con Interfaz de Streamlit, simulada en Python con el programa BioSTEAM")
-    st.subheader("Introducción a la simulación de procesos y diseño de plantas")
-    st.subheader("IQ. Tania Bravo Cassab")
-    st.divider()
-
-    col1, col2 = st.columns([2, 1])
-
-    with col1:
-        st.markdown("""        
-        ### 🧪 Sobre el Proceso
-       La planta tiene como objetivo concentrar una corriente de alimentación de "Mosto"(solución acuosa de etanol en agua) mediante una separación flash adiabática.
-       Se considera una coreinte de recirculación de la corriente de fondo del separador flash "Vinazas" para precalentar la alimentación y reducir el consumo energético.
-
-        ### ⚙️ Características Principales
-        *   **Cálculo Termodinámico:** Respaldado por el framework *BioSTEAM* y *Thermosteam* para asegurar balances de masa y energía exactos en mezclas no ideales de Etanol y Agua.
-        *   **Diagrama de Proceso Interactivo:** Visualización dinámica a través de un diagrama PFD embebido en SVG con lecturas operativas al pasar el cursor sobre los equipos.
-        *   **Análisis Económico (TEA):** Monitoreo instantáneo del Costo de Producción, ROI (Retorno de Inversión), y el valor neto actual (NPV) del diseño.
-        *   **Tutor Inteligente Integrado:** Consultas analíticas potenciadas por IA para resolver dudas de diseño y optimizar variables operativas.
-        """)
-        
-        st.write("")
-        # Botón con redirección y limpieza para evitar atascos de código
-        if st.button("💻 Ingresar al Simulador de Procesos", type="primary", use_container_width=True):
-            st.session_state['pagina'] = 'simulacion'
-            st.rerun()
-
-    with col2:
-        st.info("""
-        **💡 Nota de Uso:**
-        Para un rendimiento óptimo, asegúrate de mantener la corriente de alimentación en rangos de líquido subenfriado para evitar la cavitación en la bomba de carga inicial P-110.
-        """)
-        st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
-
-# =========================================================================
 # 2. FUNCIONES SOURCING Y CÁLCULO (MOTOR BIOSTEAM)
 # =========================================================================
 def correr_simulacion(t_mosto, t_flash, p_flash, 
                       precio_elec, precio_vapor, precio_agua, precio_mp, precio_etanol):
-     
+    
+                          
     bst.main_flowsheet.clear()
     chemicals = tmo.Chemicals(["Water", "Ethanol"])
     bst.settings.set_thermo(chemicals)
@@ -119,6 +96,7 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 # =========================================================================
 # 3. TEA Robusto (Simulador económico)
 # =========================================================================
+                          
     class TEA_Robusto(bst.TEA):
         def _DPI(self, installed_equipment_cost): return self.purchase_cost
         def _TDC(self, DPI): return DPI
@@ -165,92 +143,109 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 # =========================================================================
 # 4. ADVERTENCIAS (Temperatura de entraday temperatura W-310)
 # =========================================================================
+                          
     advertencias = []
     if mosto.phase != 'l' or mosto.V > 0.01:
         advertencias.append(f"⚠️ **Alerta Mosto:** La alimentación ha entrado en ebullición parcial (Fracción de Vapor: {mosto.V:.2%}). La alimentación debe mantenerse puramente líquida.")
 
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
 
+# =========================================================================
+# 5. PFD INTERACTIVO (Resultados en imagen SVG)
+# =========================================================================
+
+def generar_pfd_interactivo(datos_simulacion):
+    ruta_svg = "D_eth_sys.svg"
+    if not os.path.exists(ruta_svg):
+        return None
+    
+    with open(ruta_svg, "r", encoding="utf-8") as f:
+        svg_content = f.read()
+
+    capa_interactiva = ""
+    for equipo, pos in ZONAS_EQUIPOS.items():
+        id_sim = equipo.replace("-", "").replace(" ", "")
+        info = datos_simulacion.get(id_sim, datos_simulacion.get(equipo, {"Estado": "Monitoreando..."}))
+        
+        tooltip_html = f"<b>{equipo}</b><br>"
+        for clave, valor in info.items():
+            tooltip_html += f"{clave}: {valor}<br>"
+        
+        capa_interactiva += f"""
+        <rect x="{pos[0]}" y="{pos[1]}" width="{pos[2]}" height="{pos[3]}" 
+              fill="white" fill-opacity="0" style="cursor:pointer;"
+              onmouseover="showTip(event, '{tooltip_html}')" 
+              onmouseout="hideTip()"
+              onclick="alert('{equipo}\\n{'-'*15}\\n' + '{tooltip_html}'.replace(/<br>/g, '\\n').replace(/<b>/g, '').replace(/<\\/b>/g, ''))"/>
+        """
+
+   
+
+    return f"""
+    <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
+        <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
+             color: #00ffcc; padding: 12px; border-radius: 8px; font-family: 'Segoe UI', Tahoma; 
+             font-size: 13px; z-index: 10000; pointer-events: none; border: 1px solid #00ffcc;
+             box-shadow: 0px 0px 15px rgba(0,255,204,0.3);"></div>
+        {svg_content.replace('</svg>', capa_interactiva + '</svg>')}
+    </div>
+    <script>
+        const tipBox = document.getElementById('tooltip-box');
+        function showTip(e, text) {{
+            tipBox.innerHTML = text;
+            tipBox.style.display = 'block';
+            moverTip(e);
+        }}
+        function hideTip() {{ tipBox.style.display = 'none'; }}
+        function moverTip(e) {{
+            tipBox.style.left = (e.clientX + 20) + 'px';
+            tipBox.style.top = (e.clientY + 20) + 'px';
+        }}
+        document.addEventListener('mousemove', moverTip);
+    </script>
+    """
 
 # =========================================================================
-# 5. BOTONES CAMBIO DE PÁGINA
+# 6. PÁGINA DE INICIO (LANDING PAGE)
 # =========================================================================
-    col_nav1, col_nav2 = st.columns(2)
-    with col_nav1:
-        if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
-        # Guardamos una copia de los sliders actuales como valores base
-            st.session_state['params_base'] = {
-            't_mosto': t_mosto, 't_flash': t_flash, 'p_flash': p_flash,
-            'p_elec': p_elec, 'p_vapor': p_vapor, 'p_agua_c': p_agua_c,
-            'p_mp': p_mp, 'p_etanol': p_etanol
-              }
-            st.session_state['pagina'] = 'sensibilidad'
-            st.rerun()    
-    with col_nav2:
-        if st.button("🗺️ Ver Diagramas de Ingeniería", type="secondary", use_container_width=True):
-            st.session_state['pagina'] = 'diagramas'
+def mostrar_inicio():
+    st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
+    st.subheader("Plataforma con Interfaz de Streamlit, simulada en Python con el programa BioSTEAM")
+    st.subheader("Introducción a la simulación de procesos y diseño de plantas")
+    st.subheader("IQ. Tania Bravo Cassab")
+    st.divider()
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.markdown("""        
+        ### 🧪 Sobre el Proceso
+       La planta tiene como objetivo concentrar una corriente de alimentación de "Mosto"(solución acuosa de etanol en agua) mediante una separación flash adiabática.
+       Se considera una coreinte de recirculación de la corriente de fondo del separador flash "Vinazas" para precalentar la alimentación y reducir el consumo energético.
+
+        ### ⚙️ Características Principales
+        *   **Cálculo Termodinámico Riguroso:** Respaldado por el framework *BioSTEAM* y *Thermosteam* para asegurar balances de masa y energía exactos en mezclas no ideales de Etanol y Agua.
+        *   **Gemelo Digital Interactivo:** Visualización dinámica a través de un diagrama PFD embebido en SVG con lecturas operativas al pasar el cursor sobre los equipos.
+        *   **Análisis Económico (TEA):** Monitoreo instantáneo del Costo de Producción, ROI (Retorno de Inversión), y el valor neto actual (NPV) del diseño.
+        *   **Tutor Inteligente Integrado:** Consultas analíticas potenciadas por IA para resolver dudas de diseño y optimizar variables operativas.
+        """)
+        
+        st.write("")
+        # Botón con redirección y limpieza para evitar atascos de código
+        if st.button("💻 Ingresar al Simulador de Procesos", type="primary", use_container_width=True):
+            st.session_state['pagina'] = 'simulacion'
             st.rerun()
 
-# =========================================================================
-# 6. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
-# =========================================================================
-    if 'resultados' in st.session_state:
-        dm, de, ec, pf, advs = st.session_state['resultados']
-        
-        if advs:
-            for alerta in advs:
-                st.warning(alerta)
-            st.divider()
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("📊 Balances de Materia")
-            st.dataframe(dm, use_container_width=True)
-            st.subheader("📈 Economía")
-            st.dataframe(ec, use_container_width=True)
-            
-        with col2:
-            st.subheader("⚡ Energía")
-            st.dataframe(de, use_container_width=True)
+    with col2:
+        st.info("""
+        **💡 Nota de Uso:**
+        Para un rendimiento óptimo, asegúrate de mantener la corriente de alimentación en rangos de líquido subenfriado para evitar la cavitación en la bomba de carga inicial P-110.
+        """)
+        st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
 
 # =========================================================================
-# 7. TUTOR IA Interactivo (Gemini)
+# 7. PÁGINA DEL SIMULADOR (TU CÓDIGO ORIGINAL MODULARIZADO)
 # =========================================================================
-        st.divider()
-        st.subheader("🤖 Tutor IA Interactivo")
-        api_key = st.secrets.get("GEMINI_API_KEY")
-        
-        if api_key:
-            user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
-            if st.button("Enviar al Tutor"):
-                if user_question:
-                    with st.spinner('Analizando...'):
-                        genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-2.5-pro')
-                        contexto = f"""
-                        Actúa como un tutor experto en simulación de procesos, balances de materia y energía, diseño de plantas y análisis económico. Explica los resultados de forma clara para estudiantes de ingeniería química. Utiliza únicamente los valores calculados o mostrados por la aplicación. No inventes datos. Si falta información, indícalo de forma explícita y sugiere qué dato sería necesario para mejorar el análisis.
-                        Resultados: {dm.to_string()}
-                        Economía: {ec}
-                        Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
-                        Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
-                        Responde en <250 palabras de forma didáctica.
-                        """
-                        full_prompt = f"{contexto}\n\nPregunta: {user_question}"
-                        try:
-                            response = model.generate_content(full_prompt)
-                            st.info(response.text)
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-                else:
-                    st.warning("Escribe una pregunta.")
-        else:
-            st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
-
-# =========================================================================
-# 2. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
-# =========================================================================
-
-
 def mostrar_simulacion():
     # Botón discreto en la barra lateral para volver a la Home
     if st.sidebar.button("🏠 Volver a Inicio"):
@@ -293,49 +288,79 @@ def mostrar_simulacion():
             st.session_state['resultados'] = (dm, de, ec, pf, advs)
             st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
 
+    col_nav1, col_nav2 = st.columns(2)
+    with col_nav1:
+        if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
+        # Guardamos una copia de los sliders actuales como valores base
+            st.session_state['params_base'] = {
+            't_mosto': t_mosto, 't_flash': t_flash, 'p_flash': p_flash,
+            'p_elec': p_elec, 'p_vapor': p_vapor, 'p_agua_c': p_agua_c,
+            'p_mp': p_mp, 'p_etanol': p_etanol
+              }
+            st.session_state['pagina'] = 'sensibilidad'
+            st.rerun()            
+    with col_nav2:
+        if st.button("🗺️ Ver Diagramas de Ingeniería", type="secondary", use_container_width=True):
+            st.session_state['pagina'] = 'diagramas'
+            st.rerun()
 
 # =========================================================================
-# 8. PFD INTERACTIVO (Resultados en imagen SVG)
+# 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
 # =========================================================================
-# Mapeo de coordenadas para el archivo D_eth_sys.svg
-ZONAS_EQUIPOS = {
-    "P-110": [170, 55, 55, 55],
-    "W-210": [375, 95, 95, 75],
-    "W-310": [510, 290, 80, 70],
-    "V-411": [660, 390, 60, 45],
-    "K-410": [855, 320, 95, 180],
-    "W-510": [975, 490, 80, 90],
-    "P-510": [1040, 675, 60, 45],
-    "Producto Final": [970, 725, 180, 100]
-}
-
-def generar_pfd_interactivo(datos_simulacion):
-    ruta_svg = "D_eth_sys.svg"
-    if not os.path.exists(ruta_svg):
-        return None
-    
-    with open(ruta_svg, "r", encoding="utf-8") as f:
-        svg_content = f.read()
-
-    capa_interactiva = ""
-    for equipo, pos in ZONAS_EQUIPOS.items():
-        id_sim = equipo.replace("-", "").replace(" ", "")
-        info = datos_simulacion.get(id_sim, datos_simulacion.get(equipo, {"Estado": "Monitoreando..."}))
+    if 'resultados' in st.session_state:
+        dm, de, ec, pf, advs = st.session_state['resultados']
         
-        tooltip_html = f"<b>{equipo}</b><br>"
-        for clave, valor in info.items():
-            tooltip_html += f"{clave}: {valor}<br>"
-        
-        capa_interactiva += f"""
-        <rect x="{pos[0]}" y="{pos[1]}" width="{pos[2]}" height="{pos[3]}" 
-              fill="white" fill-opacity="0" style="cursor:pointer;"
-              onmouseover="showTip(event, '{tooltip_html}')" 
-              onmouseout="hideTip()"
-              onclick="alert('{equipo}\\n{'-'*15}\\n' + '{tooltip_html}'.replace(/<br>/g, '\\n').replace(/<b>/g, '').replace(/<\\/b>/g, ''))"/>
-        """
+        if advs:
+            for alerta in advs:
+                st.warning(alerta)
+            st.divider()
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("📊 Balances de Materia")
+            st.dataframe(dm, use_container_width=True)
+            st.subheader("📈 Economía")
+            st.dataframe(ec, use_container_width=True)
+            
+        with col2:
+            st.subheader("⚡ Energía")
+            st.dataframe(de, use_container_width=True)
 
 # =========================================================================
-# 9. INTEGRACIÓN SVG (mostrar resultados en SVG)
+# 9. TUTOR IA Interactivo (Gemini)
+# =========================================================================
+        st.divider()
+        st.subheader("🤖 Tutor IA Interactivo")
+        api_key = st.secrets.get("GEMINI_API_KEY")
+        
+        if api_key:
+            user_question = st.text_input("Hazle una pregunta al tutor sobre los resultados:")
+            if st.button("Enviar al Tutor"):
+                if user_question:
+                    with st.spinner('Analizando...'):
+                        genai.configure(api_key=api_key)
+                        model = genai.GenerativeModel('gemini-2.5-pro')
+                        contexto = f"""
+                        Actúa como un tutor experto en simulación de procesos, balances de materia y energía, diseño de plantas y análisis económico. Explica los resultados de forma clara para estudiantes de ingeniería química. Utiliza únicamente los valores calculados o mostrados por la aplicación. No inventes datos. Si falta información, indícalo de forma explícita y sugiere qué dato sería necesario para mejorar el análisis.
+                        Resultados: {dm.to_string()}
+                        Economía: {ec}
+                        Precios: Elec={p_elec}$, Agua={p_agua_c}$, Vapor={p_vapor}$, MP={p_mp}$.
+                        Condiciones: Temp={t_flash}C, Pres={p_flash}atm.
+                        Responde en <250 palabras de forma didáctica.
+                        """
+                        full_prompt = f"{contexto}\n\nPregunta: {user_question}"
+                        try:
+                            response = model.generate_content(full_prompt)
+                            st.info(response.text)
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                else:
+                    st.warning("Escribe una pregunta.")
+        else:
+            st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
+
+# =========================================================================
+# 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
 # =========================================================================
         row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
         if not row_p_final.empty:
@@ -369,7 +394,7 @@ def generar_pfd_interactivo(datos_simulacion):
         }
 
         st.divider()
-        st.subheader("🧪 Diagrama de Proceso: Monitoreo en Tiempo Real")
+        st.subheader("🧪 Gemelo Digital: Monitoreo en Tiempo Real")
         
         html_interactivo = generar_pfd_interactivo(datos_actualizados)
         
@@ -382,7 +407,7 @@ def generar_pfd_interactivo(datos_simulacion):
         st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
 
 # =========================================================================
-# 10. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
+# 11. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
 # =========================================================================
 if st.session_state['pagina'] == 'inicio':
     mostrar_inicio()
