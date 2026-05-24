@@ -9,25 +9,93 @@ import streamlit.components.v1 as components
 import numpy as np
 
 # =========================================================================
-# 1. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
+# 1. PÁGINA DE INICIO (LANDING PAGE)
+# =========================================================================
+def mostrar_inicio():
+    st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
+    st.subheader("Plataforma con Interfaz de Streamlit, simulada en Python con el programa BioSTEAM")
+    st.subheader("Introducción a la simulación de procesos y diseño de plantas")
+    st.subheader("IQ. Tania Bravo Cassab")
+    st.divider()
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.markdown("""        
+        ### 🧪 Sobre el Proceso
+       La planta tiene como objetivo concentrar una corriente de alimentación de "Mosto"(solución acuosa de etanol en agua) mediante una separación flash adiabática.
+       Se considera una coreinte de recirculación de la corriente de fondo del separador flash "Vinazas" para precalentar la alimentación y reducir el consumo energético.
+
+        ### ⚙️ Características Principales
+        *   **Cálculo Termodinámico:** Respaldado por el framework *BioSTEAM* y *Thermosteam* para asegurar balances de masa y energía exactos en mezclas no ideales de Etanol y Agua.
+        *   **Diagrama de Proceso Interactivo:** Visualización dinámica a través de un diagrama PFD embebido en SVG con lecturas operativas al pasar el cursor sobre los equipos.
+        *   **Análisis Económico (TEA):** Monitoreo instantáneo del Costo de Producción, ROI (Retorno de Inversión), y el valor neto actual (NPV) del diseño.
+        *   **Tutor Inteligente Integrado:** Consultas analíticas potenciadas por IA para resolver dudas de diseño y optimizar variables operativas.
+        """)
+        
+        st.write("")
+        # Botón con redirección y limpieza para evitar atascos de código
+        if st.button("💻 Ingresar al Simulador de Procesos", type="primary", use_container_width=True):
+            st.session_state['pagina'] = 'simulacion'
+            st.rerun()
+
+    with col2:
+        st.info("""
+        **💡 Nota de Uso:**
+        Para un rendimiento óptimo, asegúrate de mantener la corriente de alimentación en rangos de líquido subenfriado para evitar la cavitación en la bomba de carga inicial P-110.
+        """)
+        st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
+
+# =========================================================================
+# 2. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
 # =========================================================================
 st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
-
-# Mapeo de coordenadas para el archivo D_eth_sys.svg
-ZONAS_EQUIPOS = {
-    "P-110": [170, 55, 55, 55],
-    "W-210": [375, 95, 95, 75],
-    "W-310": [510, 290, 80, 70],
-    "V-411": [660, 390, 60, 45],
-    "K-410": [855, 320, 95, 180],
-    "W-510": [975, 490, 80, 90],
-    "P-510": [1040, 675, 60, 45],
-    "Producto Final": [970, 725, 180, 100]
-}
 
 # Inicializar el control de navegación si no existe
 if 'pagina' not in st.session_state:
     st.session_state['pagina'] = 'inicio'
+
+def mostrar_simulacion():
+    # Botón discreto en la barra lateral para volver a la Home
+    if st.sidebar.button("🏠 Volver a Inicio"):
+        st.session_state['pagina'] = 'inicio'
+        st.rerun()
+
+    st.title("🌡️ Panel de Simulación y Control Operativo")
+    
+    # CONFIGURACIÓN DE LA BARRA LATERAL
+    st.sidebar.header("🌡️ Parámetros Proceso")
+    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 150, 50)
+    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
+    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 5.0, 1.0, step=0.1)
+
+    st.sidebar.divider()
+    st.sidebar.header("💰 Parámetros Económicos")
+    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 5.0, 2.0, step=0.5)
+    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.01, 5.0, 2.0, step=0.2)
+    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.5, 15.0, 5.0, step=1.0)
+    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 5.0, 2.0, step=0.2)
+    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.1, 6.0, 2.0, step=0.1)
+
+    if st.sidebar.button("Simular Proceso", type="primary"):
+        # 1. Recibimos los 6 elementos que devuelve la función (añadimos 'advs')
+        dm, de, ec, pf, advs, err = correr_simulacion(
+            t_mosto, 
+            t_flash, 
+            p_flash, 
+            p_elec, 
+            p_vapor, 
+            p_agua_c, 
+            p_mp, 
+            p_etanol
+        )
+        
+        if err:
+            st.error(err)
+        else:
+            # 2. Guardamos las 5 variables necesarias en la sesión (añadimos 'advs')
+            st.session_state['resultados'] = (dm, de, ec, pf, advs)
+            st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
 
 # =========================================================================
 # 2. FUNCIONES SOURCING Y CÁLCULO (MOTOR BIOSTEAM)
@@ -150,144 +218,10 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
 
     return pd.DataFrame(datos_mat), pd.DataFrame(datos_en), ind_econ, p_path, advertencias, None
 
-# =========================================================================
-# 5. PFD INTERACTIVO (Resultados en imagen SVG)
-# =========================================================================
-
-def generar_pfd_interactivo(datos_simulacion):
-    ruta_svg = "D_eth_sys.svg"
-    if not os.path.exists(ruta_svg):
-        return None
-    
-    with open(ruta_svg, "r", encoding="utf-8") as f:
-        svg_content = f.read()
-
-    capa_interactiva = ""
-    for equipo, pos in ZONAS_EQUIPOS.items():
-        id_sim = equipo.replace("-", "").replace(" ", "")
-        info = datos_simulacion.get(id_sim, datos_simulacion.get(equipo, {"Estado": "Monitoreando..."}))
-        
-        tooltip_html = f"<b>{equipo}</b><br>"
-        for clave, valor in info.items():
-            tooltip_html += f"{clave}: {valor}<br>"
-        
-        capa_interactiva += f"""
-        <rect x="{pos[0]}" y="{pos[1]}" width="{pos[2]}" height="{pos[3]}" 
-              fill="white" fill-opacity="0" style="cursor:pointer;"
-              onmouseover="showTip(event, '{tooltip_html}')" 
-              onmouseout="hideTip()"
-              onclick="alert('{equipo}\\n{'-'*15}\\n' + '{tooltip_html}'.replace(/<br>/g, '\\n').replace(/<b>/g, '').replace(/<\\/b>/g, ''))"/>
-        """
-
-   
-
-    return f"""
-    <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
-        <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
-             color: #00ffcc; padding: 12px; border-radius: 8px; font-family: 'Segoe UI', Tahoma; 
-             font-size: 13px; z-index: 10000; pointer-events: none; border: 1px solid #00ffcc;
-             box-shadow: 0px 0px 15px rgba(0,255,204,0.3);"></div>
-        {svg_content.replace('</svg>', capa_interactiva + '</svg>')}
-    </div>
-    <script>
-        const tipBox = document.getElementById('tooltip-box');
-        function showTip(e, text) {{
-            tipBox.innerHTML = text;
-            tipBox.style.display = 'block';
-            moverTip(e);
-        }}
-        function hideTip() {{ tipBox.style.display = 'none'; }}
-        function moverTip(e) {{
-            tipBox.style.left = (e.clientX + 20) + 'px';
-            tipBox.style.top = (e.clientY + 20) + 'px';
-        }}
-        document.addEventListener('mousemove', moverTip);
-    </script>
-    """
 
 # =========================================================================
-# 6. PÁGINA DE INICIO (LANDING PAGE)
+# 5. BOTONES CAMBIO DE PÁGINA
 # =========================================================================
-def mostrar_inicio():
-    st.title("💭 Simulador de Planta de Concentración de Etanol con Integración Energética Versión 5")
-    st.subheader("Plataforma con Interfaz de Streamlit, simulada en Python con el programa BioSTEAM")
-    st.subheader("Introducción a la simulación de procesos y diseño de plantas")
-    st.subheader("IQ. Tania Bravo Cassab")
-    st.divider()
-
-    col1, col2 = st.columns([2, 1])
-
-    with col1:
-        st.markdown("""        
-        ### 🧪 Sobre el Proceso
-       La planta tiene como objetivo concentrar una corriente de alimentación de "Mosto"(solución acuosa de etanol en agua) mediante una separación flash adiabática.
-       Se considera una coreinte de recirculación de la corriente de fondo del separador flash "Vinazas" para precalentar la alimentación y reducir el consumo energético.
-
-        ### ⚙️ Características Principales
-        *   **Cálculo Termodinámico Riguroso:** Respaldado por el framework *BioSTEAM* y *Thermosteam* para asegurar balances de masa y energía exactos en mezclas no ideales de Etanol y Agua.
-        *   **Gemelo Digital Interactivo:** Visualización dinámica a través de un diagrama PFD embebido en SVG con lecturas operativas al pasar el cursor sobre los equipos.
-        *   **Análisis Económico (TEA):** Monitoreo instantáneo del Costo de Producción, ROI (Retorno de Inversión), y el valor neto actual (NPV) del diseño.
-        *   **Tutor Inteligente Integrado:** Consultas analíticas potenciadas por IA para resolver dudas de diseño y optimizar variables operativas.
-        """)
-        
-        st.write("")
-        # Botón con redirección y limpieza para evitar atascos de código
-        if st.button("💻 Ingresar al Simulador de Procesos", type="primary", use_container_width=True):
-            st.session_state['pagina'] = 'simulacion'
-            st.rerun()
-
-    with col2:
-        st.info("""
-        **💡 Nota de Uso:**
-        Para un rendimiento óptimo, asegúrate de mantener la corriente de alimentación en rangos de líquido subenfriado para evitar la cavitación en la bomba de carga inicial P-110.
-        """)
-        st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
-
-# =========================================================================
-# 7. PÁGINA DEL SIMULADOR (TU CÓDIGO ORIGINAL MODULARIZADO)
-# =========================================================================
-def mostrar_simulacion():
-    # Botón discreto en la barra lateral para volver a la Home
-    if st.sidebar.button("🏠 Volver a Inicio"):
-        st.session_state['pagina'] = 'inicio'
-        st.rerun()
-
-    st.title("🌡️ Panel de Simulación y Control Operativo")
-    
-    # CONFIGURACIÓN DE LA BARRA LATERAL
-    st.sidebar.header("🌡️ Parámetros Proceso")
-    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 150, 50)
-    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
-    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 5.0, 1.0, step=0.1)
-
-    st.sidebar.divider()
-    st.sidebar.header("💰 Parámetros Económicos")
-    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 5.0, 2.0, step=0.5)
-    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.01, 5.0, 2.0, step=0.2)
-    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.5, 15.0, 5.0, step=1.0)
-    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 5.0, 2.0, step=0.2)
-    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.1, 6.0, 2.0, step=0.1)
-
-    if st.sidebar.button("Simular Proceso", type="primary"):
-        # 1. Recibimos los 6 elementos que devuelve la función (añadimos 'advs')
-        dm, de, ec, pf, advs, err = correr_simulacion(
-            t_mosto, 
-            t_flash, 
-            p_flash, 
-            p_elec, 
-            p_vapor, 
-            p_agua_c, 
-            p_mp, 
-            p_etanol
-        )
-        
-        if err:
-            st.error(err)
-        else:
-            # 2. Guardamos las 5 variables necesarias en la sesión (añadimos 'advs')
-            st.session_state['resultados'] = (dm, de, ec, pf, advs)
-            st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
-
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
         if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
@@ -305,7 +239,7 @@ def mostrar_simulacion():
             st.rerun()
 
 # =========================================================================
-# 8. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
+# 6. DESPLIEGUE DE RESULTADOS (Mostrar resultados)
 # =========================================================================
     if 'resultados' in st.session_state:
         dm, de, ec, pf, advs = st.session_state['resultados']
@@ -327,7 +261,7 @@ def mostrar_simulacion():
             st.dataframe(de, use_container_width=True)
 
 # =========================================================================
-# 9. TUTOR IA Interactivo (Gemini)
+# 7. TUTOR IA Interactivo (Gemini)
 # =========================================================================
         st.divider()
         st.subheader("🤖 Tutor IA Interactivo")
@@ -359,9 +293,75 @@ def mostrar_simulacion():
         else:
             st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
 
+
 # =========================================================================
-# 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
+# 8. PFD INTERACTIVO (Resultados en imagen SVG)
 # =========================================================================
+# Mapeo de coordenadas para el archivo D_eth_sys.svg
+ZONAS_EQUIPOS = {
+    "P-110": [170, 55, 55, 55],
+    "W-210": [375, 95, 95, 75],
+    "W-310": [510, 290, 80, 70],
+    "V-411": [660, 390, 60, 45],
+    "K-410": [855, 320, 95, 180],
+    "W-510": [975, 490, 80, 90],
+    "P-510": [1040, 675, 60, 45],
+    "Producto Final": [970, 725, 180, 100]
+}
+
+def generar_pfd_interactivo(datos_simulacion):
+    ruta_svg = "D_eth_sys.svg"
+    if not os.path.exists(ruta_svg):
+        return None
+    
+    with open(ruta_svg, "r", encoding="utf-8") as f:
+        svg_content = f.read()
+
+    capa_interactiva = ""
+    for equipo, pos in ZONAS_EQUIPOS.items():
+        id_sim = equipo.replace("-", "").replace(" ", "")
+        info = datos_simulacion.get(id_sim, datos_simulacion.get(equipo, {"Estado": "Monitoreando..."}))
+        
+        tooltip_html = f"<b>{equipo}</b><br>"
+        for clave, valor in info.items():
+            tooltip_html += f"{clave}: {valor}<br>"
+        
+        capa_interactiva += f"""
+        <rect x="{pos[0]}" y="{pos[1]}" width="{pos[2]}" height="{pos[3]}" 
+              fill="white" fill-opacity="0" style="cursor:pointer;"
+              onmouseover="showTip(event, '{tooltip_html}')" 
+              onmouseout="hideTip()"
+              onclick="alert('{equipo}\\n{'-'*15}\\n' + '{tooltip_html}'.replace(/<br>/g, '\\n').replace(/<b>/g, '').replace(/<\\/b>/g, ''))"/>
+        """
+
+# =========================================================================
+# 9. INTEGRACIÓN SVG (mostrar resultados en SVG)
+# =========================================================================
+
+    return f"""
+    <div id="wrapper" style="position: relative; display: inline-block; width: 100%;">
+        <div id="tooltip-box" style="position: fixed; display: none; background: rgba(20, 20, 20, 0.9); 
+             color: #00ffcc; padding: 12px; border-radius: 8px; font-family: 'Segoe UI', Tahoma; 
+             font-size: 13px; z-index: 10000; pointer-events: none; border: 1px solid #00ffcc;
+             box-shadow: 0px 0px 15px rgba(0,255,204,0.3);"></div>
+        {svg_content.replace('</svg>', capa_interactiva + '</svg>')}
+    </div>
+    <script>
+        const tipBox = document.getElementById('tooltip-box');
+        function showTip(e, text) {{
+            tipBox.innerHTML = text;
+            tipBox.style.display = 'block';
+            moverTip(e);
+        }}
+        function hideTip() {{ tipBox.style.display = 'none'; }}
+        function moverTip(e) {{
+            tipBox.style.left = (e.clientX + 20) + 'px';
+            tipBox.style.top = (e.clientY + 20) + 'px';
+        }}
+        document.addEventListener('mousemove', moverTip);
+    </script>
+    """
+
         row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
         if not row_p_final.empty:
             p_bar = row_p_final['Presión (bar)'].values[0]
@@ -407,7 +407,7 @@ def mostrar_simulacion():
         st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
 
 # =========================================================================
-# 11. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
+# 10. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
 # =========================================================================
 if st.session_state['pagina'] == 'inicio':
     mostrar_inicio()
