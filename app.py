@@ -7,6 +7,7 @@ import os
 import uuid
 import streamlit.components.v1 as components
 import numpy as np
+import graphviz
 
 st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
 
