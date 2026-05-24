@@ -399,9 +399,9 @@ def generar_pfd_interactivo(datos_simulacion):
             st.error("🚨 **Error de visualización:** El archivo `'D_eth_sys.svg'` no fue localizado en el servidor. Revisa que esté subido en la raíz de GitHub con ese nombre exacto.")
         else:
             st.info("Pase el mouse sobre los equipos o la línea de 9_Producto Final para observar los resultados en vivo")
-                components.html(html_interactivo, height=750, scrolling=True)
-        else:
-            st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
+            components.html(html_interactivo, height=750, scrolling=True)
+    else:
+        st.info("Por favor, ajusta los parámetros en la barra lateral y presiona 'Simular Proceso' para ver los resultados analíticos.")
 
 # =========================================================================
 # 10. ENRUTADOR DE PÁGINAS (FLUJO PRINCIPAL)
