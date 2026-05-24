@@ -367,7 +367,7 @@ if pf and os.path.exists(pf):
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
 # =========================================================================
-row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
+        row_p_final = dm[dm['Corriente'] == '9_Producto_Final']
         if not row_p_final.empty:
             p_bar = row_p_final['Presión (bar)'].values[0]
             p_atm = round(p_bar / 1.01325, 3)
