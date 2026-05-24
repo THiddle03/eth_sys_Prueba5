@@ -359,7 +359,8 @@ if st.button("Enviar al Tutor"):
            else:
                 st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
 if pf and os.path.exists(pf):
-
+            st.divider()
+            st.image(pf, caption="Gráfico estructural estático (BioSTEAM)")
 # =========================================================================
 # 10. INTEGRACIÓN SVG (mostrar resultados en SVG)
 # =========================================================================
