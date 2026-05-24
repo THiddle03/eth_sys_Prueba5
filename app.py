@@ -290,15 +290,15 @@ def mostrar_simulacion():
 
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
-    if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
+        if st.button("📊 Ver Análisis de Sensibilidad", type="secondary"):
         # Guardamos una copia de los sliders actuales como valores base
-        st.session_state['params_base'] = {
+            st.session_state['params_base'] = {
             't_mosto': t_mosto, 't_flash': t_flash, 'p_flash': p_flash,
             'p_elec': p_elec, 'p_vapor': p_vapor, 'p_agua_c': p_agua_c,
             'p_mp': p_mp, 'p_etanol': p_etanol
               }
-        st.session_state['pagina'] = 'sensibilidad'
-        st.rerun()            
+            st.session_state['pagina'] = 'sensibilidad'
+            st.rerun()            
     with col_nav2:
         if st.button("🗺️ Ver Diagramas de Ingeniería", type="secondary", use_container_width=True):
             st.session_state['pagina'] = 'diagramas'
