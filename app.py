@@ -2,7 +2,7 @@ import streamlit as st
 import biosteam as bst
 import thermosteam as tmo
 import pandas as pd
-import ollama as olla
+import google.generativeai as genai
 import os
 import uuid
 import streamlit.components.v1 as components
