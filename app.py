@@ -258,15 +258,15 @@ def mostrar_simulacion():
     st.sidebar.header("🌡️ Parámetros Proceso")
     t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 150, 50)
     t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
-    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 10.0, 1.0, step=0.1)
+    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 5.0, 1.0, step=0.1)
 
     st.sidebar.divider()
     st.sidebar.header("💰 Parámetros Económicos")
-    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 0.25, 0.085, step=0.005)
-    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.0001, 0.01, 0.0005, step=0.0001, format="%.4f")
-    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.01, 0.10, 0.025, step=0.005)
-    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 0.50, 0.05, step=0.01)
-    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.5, 25.0, 1.2, step=0.1)
+    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.0, 10, 5, step=0.5)
+    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.0, 10, 5, step=0.2)
+    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 1, 15,5, step=1.0)
+    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.0, 5, 2, step=0.2)
+    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.1, 5, 2, step=0.1)
 
     if st.sidebar.button("Simular Proceso", type="primary"):
         # 1. Recibimos los 6 elementos que devuelve la función (añadimos 'advs')
