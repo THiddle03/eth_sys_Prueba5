@@ -47,57 +47,6 @@ def mostrar_inicio():
         st.metric(label="Estado del Servidor", value="Operativo / En Línea", delta="BioSTEAM v5.0")
 
 # =========================================================================
-# 2. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
-# =========================================================================
-st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
-
-# Inicializar el control de navegación si no existe
-if 'pagina' not in st.session_state:
-    st.session_state['pagina'] = 'inicio'
-
-def mostrar_simulacion():
-    # Botón discreto en la barra lateral para volver a la Home
-    if st.sidebar.button("🏠 Volver a Inicio"):
-        st.session_state['pagina'] = 'inicio'
-        st.rerun()
-
-    st.title("🌡️ Panel de Simulación y Control Operativo")
-    
-    # CONFIGURACIÓN DE LA BARRA LATERAL
-    st.sidebar.header("🌡️ Parámetros Proceso")
-    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 150, 50)
-    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
-    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 5.0, 1.0, step=0.1)
-
-    st.sidebar.divider()
-    st.sidebar.header("💰 Parámetros Económicos")
-    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 5.0, 2.0, step=0.5)
-    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.01, 5.0, 2.0, step=0.2)
-    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.5, 15.0, 5.0, step=1.0)
-    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 5.0, 2.0, step=0.2)
-    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.1, 6.0, 2.0, step=0.1)
-
-    if st.sidebar.button("Simular Proceso", type="primary"):
-        # 1. Recibimos los 6 elementos que devuelve la función (añadimos 'advs')
-        dm, de, ec, pf, advs, err = correr_simulacion(
-            t_mosto, 
-            t_flash, 
-            p_flash, 
-            p_elec, 
-            p_vapor, 
-            p_agua_c, 
-            p_mp, 
-            p_etanol
-        )
-        
-        if err:
-            st.error(err)
-        else:
-            # 2. Guardamos las 5 variables necesarias en la sesión (añadimos 'advs')
-            st.session_state['resultados'] = (dm, de, ec, pf, advs)
-            st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
-
-# =========================================================================
 # 2. FUNCIONES SOURCING Y CÁLCULO (MOTOR BIOSTEAM)
 # =========================================================================
 def correr_simulacion(t_mosto, t_flash, p_flash, 
@@ -289,6 +238,57 @@ def correr_simulacion(t_mosto, t_flash, p_flash,
                     st.warning("Escribe una pregunta.")
         else:
             st.warning("Falta la configuración de GEMINI_API_KEY en secrets.")
+
+# =========================================================================
+# 2. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
+# =========================================================================
+st.set_page_config(page_title="Simulador Bioetanol Pro v5", layout="wide")
+
+# Inicializar el control de navegación si no existe
+if 'pagina' not in st.session_state:
+    st.session_state['pagina'] = 'inicio'
+
+def mostrar_simulacion():
+    # Botón discreto en la barra lateral para volver a la Home
+    if st.sidebar.button("🏠 Volver a Inicio"):
+        st.session_state['pagina'] = 'inicio'
+        st.rerun()
+
+    st.title("🌡️ Panel de Simulación y Control Operativo")
+    
+    # CONFIGURACIÓN DE LA BARRA LATERAL
+    st.sidebar.header("🌡️ Parámetros Proceso")
+    t_mosto = st.sidebar.slider("Temp. Alimentación Mosto (°C)", 25, 150, 50)
+    t_flash = st.sidebar.slider("Temp. Salida W310 (°C)", 90, 200, 90)
+    p_flash = st.sidebar.slider("Presión Separador K410 (atm)", 0.1, 5.0, 1.0, step=0.1)
+
+    st.sidebar.divider()
+    st.sidebar.header("💰 Parámetros Económicos")
+    p_elec = st.sidebar.slider("Precio Electricidad ($/kWh)", 0.01, 5.0, 2.0, step=0.5)
+    p_agua_c = st.sidebar.slider("Precio Agua Enfr. ($/MJ)", 0.01, 5.0, 2.0, step=0.2)
+    p_vapor = st.sidebar.slider("Precio Vapor ($/MJ)", 0.5, 15.0, 5.0, step=1.0)
+    p_mp = st.sidebar.slider("Precio Materia Prima ($/kg)", 0.01, 5.0, 2.0, step=0.2)
+    p_etanol = st.sidebar.slider("Precio Venta Etanol ($/kg)", 0.1, 6.0, 2.0, step=0.1)
+
+    if st.sidebar.button("Simular Proceso", type="primary"):
+        # 1. Recibimos los 6 elementos que devuelve la función (añadimos 'advs')
+        dm, de, ec, pf, advs, err = correr_simulacion(
+            t_mosto, 
+            t_flash, 
+            p_flash, 
+            p_elec, 
+            p_vapor, 
+            p_agua_c, 
+            p_mp, 
+            p_etanol
+        )
+        
+        if err:
+            st.error(err)
+        else:
+            # 2. Guardamos las 5 variables necesarias en la sesión (añadimos 'advs')
+            st.session_state['resultados'] = (dm, de, ec, pf, advs)
+            st.rerun() # Forzamos el refresco para mostrar resultados inmediatamente
 
 
 # =========================================================================
