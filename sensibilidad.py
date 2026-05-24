@@ -15,7 +15,7 @@ def mostrar_sensibilidad(correr_simulacion_func, params_base):
     if not params_base:
         st.warning("No se detectaron parámetros base de la simulación. Se usarán valores estándar.")
         params_base = {
-            't_mosto': 50, 't_flash': 90, 'p_flash': 1.0,
+            't_mosto': 50, 't_flash': 110, 'p_flash': 1.0,
             'p_elec': 0.085, 'p_vapor': 0.025, 'p_agua_c': 0.0005,
             'p_mp': 0.05, 'p_etanol': 1.2
         }
@@ -29,7 +29,7 @@ def mostrar_sensibilidad(correr_simulacion_func, params_base):
             # =========================================================================
             # GRÁFICA 1: T_mosto vs Consumo de Energía (Fijo: t_flash=110°C, p_flash=1 atm)
             # =========================================================================
-            t_mosto_rango = np.linspace(30, 90, 8) # 8 puntos entre 30 y 90 °C
+            t_mosto_rango = np.linspace(30, 90, 11) # 8 puntos entre 30 y 90 °C
             datos_g1 = []
             
             for t in t_mosto_rango:
